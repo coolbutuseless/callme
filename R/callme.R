@@ -77,8 +77,9 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   # it's better to just shift to the source code directory and compile
   # the C file specified without a path
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  on.exit(setwd(getwd()))
-  setwd(dirname(c_file))
+  start_dir <- getwd()
+  on.exit(setwd(start_dir))
+  setwd(tmp_dir)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Dump code to a file.

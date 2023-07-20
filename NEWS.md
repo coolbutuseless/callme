@@ -1,4 +1,8 @@
 
+# callme 0.1.2  2023-07-20
+
+* bugfix for directory handling
+
 # callme 0.1.1  2023-07-20
 
 * Explicitly set a finalizer on the returned reference to the DLL such that 
