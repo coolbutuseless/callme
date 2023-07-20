@@ -16,9 +16,14 @@
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
 #'        
+#' @export
+#' 
 #' @return A reference to the dynamic library which was loaded into R with 
-#'         \code{dyn.load()}.  This is returned invisibly, and usually not
-#'         needed for anything.
+#'         \code{dyn.load()} i.e. a 'DLLInfo' object.  This has been setup 
+#'         such that when the returned object goes out of scope, the dynamic 
+#'         library is unloaded i.e. the C function will no longer be accessible.
+#'         Thus the user needs to keep a reference to this returned object for 
+#'         as long as they need access to the C function.
 #'         
 #' @examples
 #' \dontrun{
@@ -29,6 +34,9 @@
 #'   return ScalarReal(asReal(val1_) + asReal(val2_));
 #' }"
 #' 
+#' # Need to keep a reference to the returned value in order to retain access
+#' # to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
+#' # when \code{'dll'} gets garbage collected.
 #' dll <- callme(code)
 #' 
 #' # Call the function
@@ -39,7 +47,6 @@
 #' }
 #' 
 #'
-#' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   
@@ -52,11 +59,18 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   stopifnot(!is.na(code))
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Setup temporary file paths 
+  # Create a new directory to work in.
+  # This is so we don't clobber any other 'Makevars' file
+  # which might exist.  e.g. two R processes trying to run 'callme()' at 
+  # the same time.
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  tmp_file <- tempfile(pattern = "callme-")
-  c_file   <- paste0(tmp_file, ".c")
-  dll_file <- paste0(tmp_file, .Platform$dynlib.ext)
+  datestamp <- strftime(Sys.time(), "%Y%m%d-%H%M")
+  tmp_dir   <- tempfile(pattern = paste0("callme_", datestamp, "_"))
+  dir.create(tmp_dir, showWarnings = FALSE, recursive = TRUE)
+  
+  tmp_file  <- tempfile(tmpdir = tmp_dir)
+  c_file    <- paste0(tmp_file, ".c")
+  dll_file  <- paste0(tmp_file, .Platform$dynlib.ext)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Due to path name weirdness between R, C, gcc, llvm and windows, 
@@ -72,26 +86,22 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   write(code, c_file)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Compile code.
-  # Have to an excplit 'COMPILE' step so we get to set CPPFLAGs, 
-  # as you cannot set CPPFLAGs when doing "R CMD SHLIB" (afaik)
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Write a 'Makevars' with the CPPFLAGS because as-far-as-I-know
+  # you cannot set CPPFLAGs when doing "R CMD SHLIB" 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!is.null(cpp_flags)) {
     stopifnot(is.character(cpp_flags))
     stopifnot(length(cpp_flags) == 1)
     stopifnot(nchar(cpp_flags) > 0)
     stopifnot(!is.na(cpp_flags))
-    
-    cpp_flags <- paste0("CPPFLAGS=", cpp_flags)
-  } 
-  
-  system2(
-    command = paste0(R.home(component = "bin"), "/R"), 
-    args    = paste(c("CMD COMPILE", cpp_flags, basename(c_file)), collapse = " ")
-  )
+    cpp_flags <- paste0("PKG_CPPFLAGS=", cpp_flags)
+    writeLines(cpp_flags, "Makevars")
+  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Link code
+  # Compile a shared library.
+  # LDFLAGs can be included at the end of a "R CMD SHLIB" call to add
+  # extra library search paths and link to libraries.
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   system2(
     command = paste0(R.home(component = "bin"), "/R"), 
@@ -103,6 +113,30 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   dll <- dyn.load(dll_file)
   
-  invisible(dll)
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Create a 'finalizer' which will be run when a specific environment falls
+  # out of scope.
+  # param env the particular environment which will be watched
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  finalizer <- function(env) {
+    short_name <- basename(tmp_file)
+    if (short_name %in% names(getLoadedDLLs())) {
+      dyn.unload(dll_file)
+    }
+  }
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Create an environment and attach it to the DLLInfo 
+  # Register a finalizer on this environment.
+  # When the returned 'dll' object falls out of scope:
+  #    * the 'env' will be garbage collected
+  #    * the finalizer() function will be called
+  #         * which unloads the actual dll 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  dll[['env']] <- new.env()
+  reg.finalizer(dll[['env']], finalizer, onexit = TRUE)
+  
+  
+  dll
 }
 

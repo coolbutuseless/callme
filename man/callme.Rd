@@ -22,8 +22,11 @@ library installed there.}
 }
 \value{
 A reference to the dynamic library which was loaded into R with 
-        \code{dyn.load()}.  This is returned invisibly, and usually not
-        needed for anything.
+        \code{dyn.load()} i.e. a 'DLLInfo' object.  This has been setup 
+        such that when the returned object goes out of scope, the dynamic 
+        library is unloaded i.e. the C function will no longer be accessible.
+        Thus the user needs to keep a reference to this returned object for 
+        as long as they need access to the C function.
 }
 \description{
 See also \code{?SHLIB}
@@ -37,6 +40,9 @@ SEXP calc_(SEXP val1_, SEXP val2_) {
   return ScalarReal(asReal(val1_) + asReal(val2_));
 }"
 
+# Need to keep a reference to the returned value in order to retain access
+# to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
+# when \code{'dll'} gets garbage collected.
 dll <- callme(code)
 
 # Call the function

@@ -1,7 +1,7 @@
 Package: callme
 Type: Package
 Title: Compile and Link C Code with .Call Semantics
-Version: 0.1.0
+Version: 0.1.1
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Compile text strings containing C code to dynamic libraries 
