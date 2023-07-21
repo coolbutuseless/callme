@@ -1,5 +1,11 @@
 
-# callme 0.1.4  2023-07-22
+
+# callme 0.1.5  2023-07-21
+
+* Be stricter about rejecting function signatures which aren't compatible with `.Call()`
+  when auto-generating wrappers.
+
+# callme 0.1.4  2023-07-21
 
 * Return a more useful object which contains wrapper functions for 
   all the C functions which adhere to `.Call()` syntax

@@ -29,13 +29,14 @@ via `.Call()`.
 
 Features:
 
-* Simple.  Supports `.Call()` only
-* Straightforward. Requires complete C code - including header includes, and 
-  value unpacking.
+* Simple. Purpose is to support `.Call()` only.
+* Straightforward. Requires user to submit complete C code - including header `#include` 
+  directives.
 * Flexible. Includes explicit handling for `PKG_CPPFLAGS` and `PKG_LIBS` for setting 
   C pre-processor flags, and library linking flags so code can link to other libraries 
   installed on the system.
-* Returned object includes auto-generated functions wrapping the `.Call()`.  Not
+* Returned object includes auto-generated functions wrapping the C functions in 
+  the code which are compatible with `.Call()`.  Not
   strictly necessary, but nice to have!
 
 ### What's in the box
@@ -44,7 +45,12 @@ Features:
 
 ### What's new
 
-#### v0.1.4  2023-07-22
+
+#### v0.1.5  2023-07-21
+
+* Stricter checks for auto-generation of wrappers for `.Call()`-compatible C functions.
+
+#### v0.1.4  2023-07-21
 
 * Return a more useful object which contains wrapper functions for 
   all the C functions which adhere to `.Call()` syntax
@@ -54,17 +60,9 @@ Features:
 
 ### Limitations
 
-* Very little sanity checking.  You must already know how to write C code!
-* As required by `.Call()`
-    * The C functions must only take `SEXP` arguments, and return a `SEXP` value.
-    * All conversion of `SEXP` to C objects must be written explicitly. There's no magic here!
-* It's up to the user to track the name of the function in C which is to 
-  be used as the first argument to `.Call()`.
-* This package tries not to assume anything about your code, or magically 
-  take care of object conversion between R and C.
-* Supports only C code in alignment with `.Call()` calling conventions.
-* Need to have standard `#include` statements in code (No magic!)
-* No support for other calling conventions like `.C()` or `.Fortran()`
+* As required by `.Call()` 
+    * the C functions must only take `SEXP` arguments, and return a `SEXP` value.
+
 
 ## Installation
 

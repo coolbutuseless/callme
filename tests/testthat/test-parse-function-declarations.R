@@ -1,4 +1,5 @@
 test_that("function declaration parser works", {
+  
   code <- r"(
 #include <R.h>
 #include <Rdefines.h>
@@ -17,7 +18,6 @@ SEXP two_(SEXP vara, SEXP varb) {
 }
 
 
-
 SEXP three_(
             SEXP vara
 ) {
@@ -25,13 +25,17 @@ SEXP three_(
 }
 
 
+SEXP not_valid_(int vara, SEXP varb) {
+  return ScalarInteger(2);
+}
+
 )"
 
   # Declaration extraction works
   decls <- callme:::extract_function_declarations(code)
   expect_identical(
     decls,
-    c("SEXP version_()", "SEXP two_(SEXP vara, SEXP varb)", "SEXP three_( SEXP vara )")
+    c("SEXP version_()", "SEXP two_(SEXP vara, SEXP varb)", "SEXP three_( SEXP vara )", "SEXP not_valid_(int vara, SEXP varb)")
   )
   
   

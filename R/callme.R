@@ -200,6 +200,7 @@ create_wrapper_functions <- function(code) {
   
   decls <- extract_function_declarations(code)
   funcs <- lapply(decls, create_wrapper_function)
+  funcs <- Filter(Negate(is.null), funcs)
   
   unlist(funcs, recursive = FALSE)
 }
@@ -223,6 +224,39 @@ extract_function_declarations <- function(code) {
   decls
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#' Extract a character vector of arguments from the declaration
+#' 
+#' @param decl string containing functino declartion
+#' 
+#' @import stringr
+#' @noRd
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+extract_args_from_declaration <- function(decl) {
+  args <- stringr::str_match(decl, "\\((.*?)\\)")
+  stopifnot(nrow(args) == 1)
+  args <- args[1, 2]
+  args <- stringr::str_split(args, ",")[[1]]
+  
+  if (length(args) == 1 && args == "") {
+    return(NULL) # no args
+  }
+  
+  if (!all(str_detect(args, "SEXP "))) {
+    # one (or more) of the arguments is not of type "SEXP"
+    # which means this cannot be a .Call() function 
+    return(NA_character_)
+  }
+  
+  args <- stringr::str_replace_all(args, "SEXP", "")
+  args <- stringr::str_trim(args)
+  if (length(args) == 1 && args == "") {
+    # Setting args to NULL here makes the function creation easier.
+    args <- NULL
+  }
+  
+  args
+}
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,15 +282,10 @@ create_wrapper_function <- function(decl) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the argument names
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  args <- stringr::str_match(decl, "\\((.*?)\\)")
-  stopifnot(nrow(args) == 1)
-  args <- args[1, 2]
-  args <- stringr::str_split(args, ",")[[1]]
-  args <- stringr::str_replace_all(args, "SEXP", "")
-  args <- stringr::str_trim(args)
-  if (length(args) == 1 && args == "") {
-    # Setting args to NULL here makes the function creation easier.
-    args <- NULL
+  args <- extract_args_from_declaration(decl)
+  if (anyNA(args)) {
+    # This is not a .Call() function
+    return(NULL)
   }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
