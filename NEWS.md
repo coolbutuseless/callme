@@ -1,4 +1,11 @@
 
+# callme 0.1.4  2023-07-22
+
+* Return a more useful object which contains wrapper functions for 
+  all the C functions which adhere to `.Call()` syntax
+* Added `verbose` flag to control whether output from the compiler is echoed
+  to the terminal. Default: `FALSE`
+  
 # callme 0.1.3  2023-07-21
 
 * Remove directory where dll was compiled when unloading the dll.

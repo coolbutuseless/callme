@@ -4,7 +4,7 @@
 \alias{callme}
 \title{Compile C code and load into R for use with \code{.Call()}}
 \usage{
-callme(code, cpp_flags = NULL, ld_flags = NULL)
+callme(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE)
 }
 \arguments{
 \item{code}{C code following the \code{.Call()} conventions.  Must
@@ -19,14 +19,14 @@ for homebrew to the compilation step.}
 e.g. \code{"-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
+
+\item{verbose}{Should the output of the compiler be echoed to the R console?
+Default: FALSE}
 }
 \value{
-A reference to the dynamic library which was loaded into R with 
-        \code{dyn.load()} i.e. a 'DLLInfo' object.  This has been setup 
-        such that when the returned object goes out of scope, the dynamic 
-        library is unloaded i.e. the C function will no longer be accessible.
-        Thus the user needs to keep a reference to this returned object for 
-        as long as they need access to the C function.
+A named list of R functions which wrap the calls to the equivalent
+        C functions.  When this returned object is garbage collected, the
+        generated library will be unloaded.
 }
 \description{
 See also \code{?SHLIB}
@@ -45,11 +45,11 @@ SEXP calc_(SEXP val1_, SEXP val2_) {
 # when \code{'dll'} gets garbage collected.
 dll <- callme(code)
 
-# Call the function
+# Manually call the function
 .Call("calc_", 1, 2.5)
 
-# Advanced: Get info about the C function / library.
-dll$calc_
+# Use the auto-generated wrapper function
+dll$calc_(1, 2.5)
 }
 
 
