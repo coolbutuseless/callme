@@ -117,12 +117,17 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create a 'finalizer' which will be run when a specific environment falls
   # out of scope.
-  # param env the particular environment which will be watched
+  # param 'env' the particular environment which will be watched
+  #
+  # Will unload the library and delete the directory where it was compiled
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   finalizer <- function(env) {
     short_name <- basename(tmp_file)
     if (short_name %in% names(getLoadedDLLs())) {
       dyn.unload(dll_file)
+      suppressWarnings(
+        unlink(tmp_dir, recursive = TRUE)
+      )
     }
   }
   

@@ -1,4 +1,8 @@
 
+# callme 0.1.3  2023-07-21
+
+* Remove directory where dll was compiled when unloading the dll.
+
 # callme 0.1.2  2023-07-20
 
 * bugfix for directory handling
