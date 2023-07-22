@@ -1,4 +1,9 @@
 
+# callme 0.1.6  2023-07-22
+
+* Auto-injecting bare mimimum required headers if not present. i.e. `R.h` and `Rdefines.h`
+* Raise warning when there doesn't appear to be any `.Call()`-compatible functions in 
+  the code
 
 # callme 0.1.5  2023-07-21
 

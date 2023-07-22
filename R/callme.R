@@ -80,6 +80,18 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   on.exit(setwd(start_dir))
   setwd(tmp_dir)
   
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Check if we have the two required includes
+  #  #include <R.h>
+  #  #include <Rdefines.h>
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (!stringr::str_detect(code, "#include <Rdefines.h>")) {
+    code <- paste("#include <Rdefines.h>", code, sep = "\n")
+  }
+  if (!stringr::str_detect(code, "#include <R.h>")) {
+    code <- paste("#include <R.h>", code, sep = "\n")
+  }
+  
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Dump code to a file.
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -201,6 +213,10 @@ create_wrapper_functions <- function(code) {
   decls <- extract_function_declarations(code)
   funcs <- lapply(decls, create_wrapper_function)
   funcs <- Filter(Negate(is.null), funcs)
+  
+  if (length(funcs) == 0) {
+    warning("Code does not appear to contain any functions compatible with .Call()")
+  }
   
   unlist(funcs, recursive = FALSE)
 }

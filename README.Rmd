@@ -45,18 +45,9 @@ Features:
 
 ### What's new
 
+#### v0.1.6  2023-07-22
 
-#### v0.1.5  2023-07-21
-
-* Stricter checks for auto-generation of wrappers for `.Call()`-compatible C functions.
-
-#### v0.1.4  2023-07-21
-
-* Return a more useful object which contains wrapper functions for 
-  all the C functions which adhere to `.Call()` syntax
-    * Really useful for interactive use as function names and arguments 
-      are easily accessed via auto-complete.
-
+* Warn when provided code does not appear to contain any `.Call()` compatible C functions.
 
 ### Limitations
 
