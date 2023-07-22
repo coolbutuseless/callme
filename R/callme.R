@@ -85,10 +85,10 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   #  #include <R.h>
   #  #include <Rdefines.h>
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!stringr::str_detect(code, "#include <Rdefines.h>")) {
+  if (!stringr::str_detect(code, "#include\\s+<Rdefines.h>")) {
     code <- paste("#include <Rdefines.h>", code, sep = "\n")
   }
-  if (!stringr::str_detect(code, "#include <R.h>")) {
+  if (!stringr::str_detect(code, "#include\\s+<R.h>")) {
     code <- paste("#include <R.h>", code, sep = "\n")
   }
   
