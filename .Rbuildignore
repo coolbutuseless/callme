@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^README.Rmd$
+^README.qmd$
 ^README.md$
 ^working$
 ^data-raw$

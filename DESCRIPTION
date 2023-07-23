@@ -1,7 +1,7 @@
 Package: callme
 Type: Package
 Title: Compile and Link C Code with .Call Semantics
-Version: 0.1.6
+Version: 0.1.7
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: Compile text strings containing C code to dynamic libraries 
@@ -11,7 +11,8 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
 Imports:
-  stringr
+    stringr
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr
 Config/testthat/edition: 3

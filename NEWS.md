@@ -1,4 +1,10 @@
 
+# callme 0.1.7  2023-07-23
+
+* Add `callme_engine()` to enable the use of `callme()` code in
+  knitr/Rmarkdown/Quarto chunks.
+* Switch to `README.qmd` from `README.Rmd`
+
 # callme 0.1.6  2023-07-22
 
 * Auto-injecting bare mimimum required headers if not present. i.e. `R.h` and `Rdefines.h`
