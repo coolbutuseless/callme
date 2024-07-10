@@ -6,13 +6,13 @@
 #' See also \code{?SHLIB}
 #' 
 #' @param code C code following the \code{.Call()} conventions.  Must
-#'        also includes any \code{#include} statements.
+#'        also include any \code{#include} statements.
 #' @param cpp_flags character string of flags for the C pre-processor.
 #'        Default: NULL
-#'        e.g. \code{"-I/opt/homebrew/include"} to add the include path 
+#'        e.g. \code{cpp_flags = "-I/opt/homebrew/include"} to add the include path 
 #'        for homebrew to the compilation step. 
 #' @param ld_flags character string of flags when linking. Default: NULL.
-#'        e.g. \code{"-L/opt/homebrew/lib -lzstd"} to include the homebrew 
+#'        e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
 #' @param verbose Should the output of the compiler be echoed to the R console?
@@ -227,10 +227,11 @@ create_wrapper_functions <- function(code) {
 #' 
 #' @param code C code as single string.  This does not recurse into source
 #'        or header files referenced in the C code.
+#' @return character vector of function declarations in \code{code}
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extract_function_declarations <- function(code) {
-  # Find all function declarsions which match: "SEXP func_name(...)"
+  # Find all function declarations which match: "SEXP func_name(...)"
   decls <- stringr::str_extract_all(code, stringr::regex("^\\s*SEXP\\s+[a-zA-Z0-9_]+\\s*\\(.*?\\)", multiline = TRUE, dotall=TRUE))[[1]]
   
   # tidy function declarations for next step
@@ -243,8 +244,8 @@ extract_function_declarations <- function(code) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Extract a character vector of arguments from the declaration
 #' 
-#' @param decl string containing functino declartion
-#' 
+#' @param decl string containing function declaration
+#' @return Character vector of argument names for the given function declaration
 #' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -276,7 +277,7 @@ extract_args_from_declaration <- function(decl) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Create a wrapper functon for the given C declaration of a .Call compatible 
+#' Create a wrapper function for the given C declaration of a \code{.Call()}-compatible 
 #' function
 #' 
 #' @param decl C declaration. E.g. \code{"SEXP two_(SEXP vara, SEXP varb)"}

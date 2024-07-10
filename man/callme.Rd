@@ -8,15 +8,15 @@ callme(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE)
 }
 \arguments{
 \item{code}{C code following the \code{.Call()} conventions.  Must
-also includes any \code{#include} statements.}
+also include any \code{#include} statements.}
 
 \item{cpp_flags}{character string of flags for the C pre-processor.
 Default: NULL
-e.g. \code{"-I/opt/homebrew/include"} to add the include path 
+e.g. \code{cpp_flags = "-I/opt/homebrew/include"} to add the include path 
 for homebrew to the compilation step.}
 
 \item{ld_flags}{character string of flags when linking. Default: NULL.
-e.g. \code{"-L/opt/homebrew/lib -lzstd"} to include the homebrew 
+e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
 
