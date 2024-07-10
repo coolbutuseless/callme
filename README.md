@@ -23,9 +23,7 @@ Features:
 - Flexible. Includes explicit handling for `PKG_CPPFLAGS` and `PKG_LIBS`
   for setting C pre-processor flags, and library linking flags so code
   can link to other libraries installed on the system.
-- Returned object includes auto-generated functions wrapping the C
-  functions in the code which are compatible with `.Call()`. Not
-  strictly necessary, but nice to have!
+- Generates R functions to call the compiled C functions.
 - Multiple functions allowed in a single code block.
 
 ### What’s in the box
@@ -109,7 +107,7 @@ callme(code, cpp_flags = "-I/opt/homebrew/include", ld_flags = "-L/opt/homebrew/
 zstd_version()
 ```
 
-    #> [1] "1.4.8"
+    #> [1] "1.5.6"
 
 ## Use in a code chunk in Rmarkdown/Quarto
 
