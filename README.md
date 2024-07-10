@@ -165,7 +165,7 @@ SEXP mul(SEXP val1, SEXP val2) {
 }
 ```
 
-#### Running the compiled C code
+#### Running the compiled C code in subsequent quarto chunks
 
 ``` r
 add(3, 2)

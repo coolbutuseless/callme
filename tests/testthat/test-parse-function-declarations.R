@@ -53,3 +53,43 @@ SEXP not_valid(int vara, SEXP varb) {
     
 })
 
+
+test_that("argument parsing works", {
+  
+  decl <- "SEXP one(SEXP two, SEXP three)"
+  expect_identical(
+    callme:::extract_args_from_declaration(decl),
+    c('two', 'three')
+  )
+  
+  
+  
+  decl <- "SEXP one(int two, SEXP three)"
+  expect_true(
+    is.na(
+      callme:::extract_args_from_declaration(decl)
+    )
+  )  
+  
+  decl <- "SEXP one()"
+  expect_null(
+    callme:::extract_args_from_declaration(decl)
+  )
+  
+  decl <- "SEXP one(  )"
+  expect_null(
+    callme:::extract_args_from_declaration(decl)
+  )
+  
+  decl <- "SEXP one(void)"
+  expect_null(
+    callme:::extract_args_from_declaration(decl)
+  )
+  
+  decl <- "SEXP one(   void    )"
+  expect_null(
+    callme:::extract_args_from_declaration(decl)
+  )
+  
+  
+})

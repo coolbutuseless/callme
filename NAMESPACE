@@ -2,4 +2,3 @@
 
 export(callme)
 export(callme_engine)
-import(stringr)

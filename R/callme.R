@@ -93,10 +93,10 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   #  #include <R.h>
   #  #include <Rdefines.h>
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!stringr::str_detect(code, "#include\\s+<Rdefines.h>")) {
+  if (!grepl("#include\\s+<Rdefines.h>", code)) {
     code <- paste("#include <Rdefines.h>", code, sep = "\n")
   }
-  if (!stringr::str_detect(code, "#include\\s+<R.h>")) {
+  if (!grepl("#include\\s+<R.h>", code)) {
     code <- paste("#include <R.h>", code, sep = "\n")
   }
   
@@ -209,7 +209,6 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
 #'        
 #' @return named list of R functions which can call into the library
 #' 
-#' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 create_wrapper_functions <- function(code, dll_file) {
@@ -235,12 +234,12 @@ create_wrapper_functions <- function(code, dll_file) {
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extract_function_declarations <- function(code) {
-  # Find all function declarations which match: "SEXP func_name(...)"
-  decls <- stringr::str_extract_all(code, stringr::regex("^\\s*SEXP\\s+[a-zA-Z0-9_]+\\s*\\(.*?\\)", multiline = TRUE, dotall=TRUE))[[1]]
+  m <- gregexpr("(?ms)^\\s*SEXP\\s+[a-zA-Z0-9_]+\\s*\\(.*?\\)", code, perl = TRUE, ignore.case = TRUE)
+  decls <- regmatches(code, m)[[1]]
   
   # tidy function declarations for next step
-  decls <- stringr::str_trim(decls)
-  decls <- stringr::str_replace_all(decls, "\\s+", " ")
+  decls <- trimws(decls)
+  decls <- gsub("\\s+", " ", decls)
   
   decls
 }
@@ -250,27 +249,28 @@ extract_function_declarations <- function(code) {
 #' 
 #' @param decl string containing function declaration
 #' @return Character vector of argument names for the given function declaration
-#' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 extract_args_from_declaration <- function(decl) {
-  args <- stringr::str_match(decl, "\\((.*?)\\)")
-  stopifnot(nrow(args) == 1)
-  args <- args[1, 2]
-  args <- stringr::str_split(args, ",")[[1]]
+  m    <- gregexpr("\\((.*?)\\)", decl, perl = TRUE)
+  args <- regmatches(decl, m)[[1]]
+  args <- substr(args, 2, nchar(args) - 1) # Remove ()
+  args <- strsplit(args, ",")[[1]]
+  args <- trimws(args)
+  args
   
-  if (length(args) == 1 && args == "") {
+  if (length(args) == 0 || (length(args) == 1 && (args == "" || args == "void"))) {
     return(NULL) # no args
   }
   
-  if (!all(str_detect(args, "SEXP "))) {
+  if (!all(grepl("SEXP ", args))) {
     # one (or more) of the arguments is not of type "SEXP"
     # which means this cannot be a .Call() function 
     return(NA_character_)
   }
   
-  args <- stringr::str_replace_all(args, "SEXP", "")
-  args <- stringr::str_trim(args)
+  args <- gsub("SEXP", "", args)
+  args <- trimws(args)
   if (length(args) == 1 && args == "") {
     # Setting args to NULL here makes the function creation easier.
     args <- NULL
@@ -288,7 +288,6 @@ extract_args_from_declaration <- function(decl) {
 #' 
 #' @return anonymous R function to \code{.Call} the dll
 #' 
-#' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 create_wrapper_function <- function(decl, dll_file) {
@@ -296,9 +295,10 @@ create_wrapper_function <- function(decl, dll_file) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the function name
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  func <- stringr::str_match(decl, "SEXP\\s+([a-zA-Z0-9_]+)")
-  stopifnot(nrow(func) == 1)
-  func_name <- func[1, 2]
+  m <- regexpr("SEXP\\s+([a-zA-Z0-9_]+)", decl, perl = TRUE)
+  func_name <- regmatches(decl, m)
+  func_name <- sub("^\\s*SEXP\\s+", "", func_name, perl = TRUE)
+  func_name
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the argument names

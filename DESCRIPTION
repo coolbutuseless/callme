@@ -14,8 +14,6 @@ Encoding: UTF-8
 URL: https://github.com/coolbutuseless/callme
 BugReports: https://github.com/coolbutuseless/callme/issues
 RoxygenNote: 7.3.1
-Imports:
-    stringr
 Suggests: 
     testthat (>= 3.0.0),
     knitr
