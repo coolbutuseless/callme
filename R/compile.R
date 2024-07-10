@@ -23,7 +23,7 @@
 #'        variable which already exists in the environment, then an error is 
 #'        raised.
 #' \describe{
-#' \item{"callme"}{(Default) Only overwrite other functions created by \code{callme()}}
+#' \item{"callme"}{(Default) Only overwrite other functions created by this package}
 #' \item{"all"}{All variables will be overwritten}
 #' \item{"functions"}{Only functions are overwritten}
 #' \item{"none"}{No variables may be overwritten}
@@ -65,14 +65,14 @@
 #' "
 #' 
 #' # compile the code and load into R
-#' callme(code)
+#' compile(code)
 #' 
 #' # Call the functions
 #' add(99.5, 0.5)
 #' mul(99.5, 0.5)
 #' new_sqrt(c(1, 10, 100, 1000))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-callme <- function(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = parent.frame(), 
+compile <- function(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = parent.frame(), 
                    overwrite = "callme", verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,7 +87,7 @@ callme <- function(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = parent.f
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create a new directory to work in.
   # This is so we don't clobber any other 'Makevars' file
-  # which might exist.  e.g. two R processes trying to run 'callme()' at 
+  # which might exist.  e.g. two R processes trying to run 'compile()' at 
   # the same time.
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   datestamp <- strftime(Sys.time(), "%Y%m%d-%H%M")
@@ -206,7 +206,7 @@ callme <- function(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = parent.f
         ) {
           # Allowed overwrite
         } else {
-          stop("callme(): Not allowed to overwrite existing variable with new wrapper function '", func_name, "'", call. = FALSE)
+          stop("compile(): Not allowed to overwrite existing variable with new wrapper function '", func_name, "'", call. = FALSE)
         }
          
         

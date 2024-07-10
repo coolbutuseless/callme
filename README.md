@@ -18,7 +18,7 @@ R’s `.Call()` syntax.
 Features:
 
 - Supports `.Call()` syntax only.
-- User submits complete C code - including functino declaration and
+- User submits complete C code - including function declaration and
   header `#include` directives.
 - Explicit handling for `PKG_CPPFLAGS` and `PKG_LDFLAGS` for setting C
   pre-processor flags, and library linking flags so code can link to
@@ -28,7 +28,7 @@ Features:
 
 ### What’s in the box
 
-- `callme(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = .GlobalEnv, verbosity = 0)`
+- `compile(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = .GlobalEnv, verbosity = 0)`
   compile the `code` and assign R functions into the nominated `env` in
   R.
 
@@ -85,7 +85,7 @@ SEXP new_sqrt(SEXP vec) {
 "
 
 # compile the code
-callme(code)
+compile(code)
 
 # Call the functions
 add(99.5, 0.5)
@@ -131,7 +131,7 @@ SEXP zstd_version() {
 )"
 
 # Compile the code 
-callme(code, 
+compile(code, 
        PKG_CPPFLAGS = "-I/opt/homebrew/include", 
        PKG_LDFLAGS  = "-L/opt/homebrew/lib -lzstd")
 

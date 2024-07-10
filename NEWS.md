@@ -1,7 +1,7 @@
 
 # callme 0.1.8
 
-* `callme()` now writes wrapper functions into the nominated environment
+* Now writes wrapper functions into the nominated environment
 
 # callme 0.1.7  2023-07-23
 
