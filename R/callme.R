@@ -25,12 +25,11 @@
 #'         generated library will be unloaded.
 #'         
 #' @examples
-#' \dontrun{
-#'   code <- "
+#' code <- "
 #' #include <R.h>
 #' #include <Rdefines.h>
-#' SEXP calc_(SEXP val1_, SEXP val2_) {
-#'   return ScalarReal(asReal(val1_) + asReal(val2_));
+#' SEXP calc(SEXP val1, SEXP val2) {
+#'   return ScalarReal(asReal(val1) + asReal(val2));
 #' }"
 #' 
 #' # Need to keep a reference to the returned value in order to retain access
@@ -38,14 +37,8 @@
 #' # when \code{'dll'} gets garbage collected.
 #' dll <- callme(code)
 #' 
-#' # Manually call the function
-#' .Call("calc_", 1, 2.5)
-#' 
 #' # Use the auto-generated wrapper function
-#' dll$calc_(1, 2.5)
-#' }
-#' 
-#'
+#' dll$calc(1, 2.5)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   
@@ -152,6 +145,9 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   # Load the DLL
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   dll <- dyn.load(dll_file)
+  if (verbose) {
+    cat("dll file: ", dll_file, "\n")
+  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create a 'finalizer' which will be run when a specific environment falls
@@ -186,7 +182,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Automatically generate some wrapper functions
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  funcs <- create_wrapper_functions(code)
+  funcs <- create_wrapper_functions(code, dll_file)
   for (fname in names(funcs)) {
     res[[fname]] <- funcs[[fname]]
   }
@@ -202,16 +198,17 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
 #' 
 #' @param code C code as single string.  This does not recurse into source
 #'        or header files referenced in the C code.
+#' @param dll_file full path to dill filename
 #'        
 #' @return named list of R functions which can call into the library
 #' 
 #' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_functions <- function(code) {
+create_wrapper_functions <- function(code, dll_file) {
   
   decls <- extract_function_declarations(code)
-  funcs <- lapply(decls, create_wrapper_function)
+  funcs <- lapply(decls, create_wrapper_function, dll_file = dll_file)
   funcs <- Filter(Negate(is.null), funcs)
   
   if (length(funcs) == 0) {
@@ -280,14 +277,14 @@ extract_args_from_declaration <- function(decl) {
 #' Create a wrapper function for the given C declaration of a \code{.Call()}-compatible 
 #' function
 #' 
-#' @param decl C declaration. E.g. \code{"SEXP two_(SEXP vara, SEXP varb)"}
+#' @param decl C declaration. E.g. \code{"SEXP two(SEXP vara, SEXP varb)"}
 #' 
 #' @return anonymous R function to \code{.Call} the dll
 #' 
 #' @import stringr
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_function <- function(decl) {
+create_wrapper_function <- function(decl, dll_file) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the function name
@@ -309,9 +306,10 @@ create_wrapper_function <- function(decl) {
   # Create the function as a string
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   func_str <- sprintf(
-    "function(%s) .Call(%s)", 
+    "function(%s) .Call(%s, PACKAGE = '%s')", 
     paste(args, collapse = ", "),
-    paste(c(dQuote(func_name, q=FALSE), args), collapse = ", ")
+    paste(c(dQuote(func_name, q=FALSE), args), collapse = ", "),
+    tools::file_path_sans_ext(base::basename(dll_file))
   )
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,3 +320,4 @@ create_wrapper_function <- function(decl) {
   
   res
 }
+

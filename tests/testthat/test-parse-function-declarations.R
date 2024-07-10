@@ -8,24 +8,24 @@ SEXP version_() {
   return ScalarInteger(1);
 }
 
-int crap_() {
+int crap() {
    Rprintf("Hello\n");
    return 999;
 }
 
-SEXP two_(SEXP vara, SEXP varb) {
+SEXP two(SEXP vara, SEXP varb) {
   return ScalarInteger(2);
 }
 
 
-SEXP three_(
+SEXP three(
             SEXP vara
 ) {
   return ScalarInteger(3);
 }
 
 
-SEXP not_valid_(int vara, SEXP varb) {
+SEXP not_valid(int vara, SEXP varb) {
   return ScalarInteger(2);
 }
 
@@ -35,16 +35,16 @@ SEXP not_valid_(int vara, SEXP varb) {
   decls <- callme:::extract_function_declarations(code)
   expect_identical(
     decls,
-    c("SEXP version_()", "SEXP two_(SEXP vara, SEXP varb)", "SEXP three_( SEXP vara )", "SEXP not_valid_(int vara, SEXP varb)")
+    c("SEXP version_()", "SEXP two(SEXP vara, SEXP varb)", "SEXP three( SEXP vara )", "SEXP not_valid(int vara, SEXP varb)")
   )
   
   
-  funcs <- callme:::create_wrapper_functions(code)
+  funcs <- callme:::create_wrapper_functions(code, dll_file = "jnk")
   
   # Created 3 functions
   expect_length(funcs, 3)
   expect_named(funcs)
-  expect_identical(names(funcs), c('version_', 'two_', 'three_'))
+  expect_identical(names(funcs), c('version_', 'two', 'three'))
 
   # Function arguments are good
   expect_null(formalArgs(funcs[[1]]))

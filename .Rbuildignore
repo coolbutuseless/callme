@@ -6,3 +6,6 @@
 ^working$
 ^data-raw$
 ^\.github$
+^.devcontainer$
+^LICENSE.md$
+^man/figures$

@@ -32,12 +32,11 @@ A named list of R functions which wrap the calls to the equivalent
 See also \code{?SHLIB}
 }
 \examples{
-\dontrun{
-  code <- "
+code <- "
 #include <R.h>
 #include <Rdefines.h>
-SEXP calc_(SEXP val1_, SEXP val2_) {
-  return ScalarReal(asReal(val1_) + asReal(val2_));
+SEXP calc(SEXP val1, SEXP val2) {
+  return ScalarReal(asReal(val1) + asReal(val2));
 }"
 
 # Need to keep a reference to the returned value in order to retain access
@@ -45,12 +44,6 @@ SEXP calc_(SEXP val1_, SEXP val2_) {
 # when \code{'dll'} gets garbage collected.
 dll <- callme(code)
 
-# Manually call the function
-.Call("calc_", 1, 2.5)
-
 # Use the auto-generated wrapper function
-dll$calc_(1, 2.5)
-}
-
-
+dll$calc(1, 2.5)
 }

@@ -17,10 +17,9 @@ text block to be rendered in the document
 An engine for knitr to handle C code compatible with \code{.Call()}
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Set the engine in an initial chunk in the document
 # Then use \code{callme} as the chunk engine
 knitr::knit_engines$set(callme = callme::callme_engine)
-}
-
+\dontshow{\}) # examplesIf}
 }

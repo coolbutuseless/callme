@@ -1,7 +1,7 @@
 
 # callme 0.1.7.9000 2024-07-10
 
-* Tidy
+* Include `PACKAGE` argument in `.Call()`
 
 # callme 0.1.7  2023-07-23
 

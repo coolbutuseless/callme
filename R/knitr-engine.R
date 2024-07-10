@@ -3,17 +3,13 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' An engine for knitr to handle C code compatible with \code{.Call()}
 #' 
-#'
-#'
 #' @param options the data passed in from the code chunk in Rmarkdown or
 #'        Quarto etc.
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf interactive()
 #' # Set the engine in an initial chunk in the document
 #' # Then use \code{callme} as the chunk engine
 #' knitr::knit_engines$set(callme = callme::callme_engine)
-#' }
 #'
 #' @return text block to be rendered in the document
 #' @export
