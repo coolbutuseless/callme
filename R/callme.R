@@ -15,13 +15,15 @@
 #'        e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
+#' @param env environment into which to assign the R wrapper functions.
+#'        Default: \code{parent.frame()}.  If \code{NULL} then no 
+#'        assignment takes place.
 #' @param verbosity Level of output: Default: 0. current max: 2
 #'        
 #' @export
 #' 
-#' @return A named list of R functions which wrap the calls to the equivalent
-#'         C functions.  When this returned object is garbage collected, the
-#'         generated library will be unloaded.
+#' @return Invisibly returns a named list of R functions. Each R function 
+#'         calls to the equivalent C functions.  
 #'         
 #' @examples
 #' code <- "
@@ -34,12 +36,12 @@
 #' # Need to keep a reference to the returned value in order to retain access
 #' # to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
 #' # when \code{'dll'} gets garbage collected.
-#' dll <- callme(code)
+#' callme(code)
 #' 
 #' # Use the auto-generated wrapper function
-#' dll$calc(1, 2.5)
+#' calc(1, 2.5)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0) {
+callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame(), verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
@@ -56,6 +58,8 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0) {
   # the same time.
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   datestamp <- strftime(Sys.time(), "%Y%m%d-%H%M")
+  suffix    <- paste(sample(c(letters, LETTERS), 8), collapse = "") # random junk
+  datestamp <- paste(datestamp, suffix, sep = "_")
   tmp_dir   <- tempfile(pattern = paste0("callme_", datestamp, "_"))
   dir.create(tmp_dir, showWarnings = FALSE, recursive = TRUE)
   
@@ -105,7 +109,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Setup stdout/stderr
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (verbosity == 0) {
+  if (verbosity > 0) {
     stdout = ""  # echo to R console
     stderr = ""  # echo to R console
   } else {
@@ -149,45 +153,28 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0) {
   }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Create a 'finalizer' which will be run when a specific environment falls
-  # out of scope.
-  # param 'env' the particular environment which will be watched
-  #
-  # Will unload the library and delete the directory where it was compiled
+  # Automatically generate some wrapper functions in a named list
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  finalizer <- function(env) {
-    short_name <- basename(tmp_file)
-    if (short_name %in% names(getLoadedDLLs())) {
-      dyn.unload(dll_file)
-      suppressWarnings(
-        unlink(tmp_dir, recursive = TRUE)
-      )
+  func_list <- create_wrapper_functions(code, dll_file)
+
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Assign functions into environment
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (!is.null(env)) {
+    for (func_name in names(func_list)) {
+      if (exists(func_name, envir = env)) {
+        warning("Clobbering function: '", func_name, "'", call. = FALSE)
+      }
+      if (verbosity >= 1) {
+        message("Assigning new function: '", func_name, "()'")
+      }
+      assign(func_name, func_list[[func_name]], pos = env)
     }
   }
   
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Create an environment and attach it to the DLLInfo 
-  # Register a finalizer on this environment.
-  # When the returned 'dll' object falls out of scope:
-  #    * the 'env' will be garbage collected
-  #    * the finalizer() function will be called
-  #         * which unloads the actual dll 
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  res <- list()
-  dll[['env']] <- new.env()
-  reg.finalizer(dll[['env']], finalizer, onexit = TRUE)
-  res$raw_dll <- dll
   
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Automatically generate some wrapper functions
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  funcs <- create_wrapper_functions(code, dll_file)
-  for (fname in names(funcs)) {
-    res[[fname]] <- funcs[[fname]]
-  }
-  
-  
-  res
+  invisible(func_list)
 }
 
 

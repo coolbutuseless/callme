@@ -4,7 +4,13 @@
 \alias{callme}
 \title{Compile C code and load into R for use with \code{.Call()}}
 \usage{
-callme(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0)
+callme(
+  code,
+  cpp_flags = NULL,
+  ld_flags = NULL,
+  env = parent.frame(),
+  verbosity = 0
+)
 }
 \arguments{
 \item{code}{C code following the \code{.Call()} conventions.  Must
@@ -20,12 +26,15 @@ e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
 
+\item{env}{environment into which to assign the R wrapper functions.
+Default: \code{parent.frame()}.  If \code{NULL} then no 
+assignment takes place.}
+
 \item{verbosity}{Level of output: Default: 0. current max: 2}
 }
 \value{
-A named list of R functions which wrap the calls to the equivalent
-        C functions.  When this returned object is garbage collected, the
-        generated library will be unloaded.
+Invisibly returns a named list of R functions. Each R function 
+        calls to the equivalent C functions.
 }
 \description{
 See also \code{?SHLIB}
@@ -41,8 +50,8 @@ SEXP calc(SEXP val1, SEXP val2) {
 # Need to keep a reference to the returned value in order to retain access
 # to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
 # when \code{'dll'} gets garbage collected.
-dll <- callme(code)
+callme(code)
 
 # Use the auto-generated wrapper function
-dll$calc(1, 2.5)
+calc(1, 2.5)
 }
