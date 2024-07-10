@@ -4,7 +4,7 @@
 \alias{callme}
 \title{Compile C code and load into R for use with \code{.Call()}}
 \usage{
-callme(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE)
+callme(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0)
 }
 \arguments{
 \item{code}{C code following the \code{.Call()} conventions.  Must
@@ -20,8 +20,7 @@ e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
 
-\item{verbose}{Should the output of the compiler be echoed to the R console?
-Default: FALSE}
+\item{verbosity}{Level of output: Default: 0. current max: 2}
 }
 \value{
 A named list of R functions which wrap the calls to the equivalent

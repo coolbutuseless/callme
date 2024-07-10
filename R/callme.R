@@ -15,8 +15,7 @@
 #'        e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
-#' @param verbose Should the output of the compiler be echoed to the R console?
-#'        Default: FALSE
+#' @param verbosity Level of output: Default: 0. current max: 2
 #'        
 #' @export
 #' 
@@ -40,7 +39,7 @@
 #' # Use the auto-generated wrapper function
 #' dll$calc(1, 2.5)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
+callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
@@ -106,7 +105,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Setup stdout/stderr
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (isTRUE(verbose)) {
+  if (verbosity == 0) {
     stdout = ""  # echo to R console
     stderr = ""  # echo to R console
   } else {
@@ -127,11 +126,11 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   )
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # If there's an error, force show the output even if verbose = FALSE
+  # Show errors
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (ret != 0) {
     warning("Error during compilation")
-    if (!verbose) {
+    if (verbosity == 0) {
       if (file.exists('stdout'))
         cat(readLines("stdout"), sep = "\n")
       if (file.exists('stderr')) 
@@ -145,7 +144,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, verbose = FALSE) {
   # Load the DLL
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   dll <- dyn.load(dll_file)
-  if (verbose) {
+  if (verbosity >= 2) {
     cat("dll file: ", dll_file, "\n")
   }
   

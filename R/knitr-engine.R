@@ -26,7 +26,7 @@ callme_engine <- function(options) {
       code      = code, 
       cpp_flags = options$cpp_flags, 
       ld_flags  = options$ld_flags,
-      verbose   = verbose
+      verbosity = as.integer(verbose)
     )
     
     dllname <- options$dllname %||% 'dll'
