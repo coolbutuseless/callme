@@ -1,10 +1,7 @@
 
-# callme 0.1.7.9000 2024-07-10
+# callme 0.1.7.9001 2024-07-10
 
-* Include `PACKAGE` argument in `.Call()`
-* Remove finalizer
-* Deprecate instructions to the user to directly use `.Call()`
-* Deprecate use of `dll$func()` as a means to call function
+* `callme()` now writes wrapper functions into the nominated environment
 
 # callme 0.1.7  2023-07-23
 

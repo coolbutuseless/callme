@@ -1,14 +1,18 @@
 Package: callme
 Type: Package
-Title: Compile and Link C Code with .Call Semantics
-Version: 0.1.7
-Author: mikefc
-Maintainer: mikefc <mikefc@coolbutuseless.com>
-Description: Compile text strings containing C code to dynamic libraries 
-    callable via '.Call()'.
+Title: Compile and Call Inline C Functions from R
+Version: 0.1.7.9001
+Authors@R: 
+    person("Mike", "Cheng", , "mikefc@coolbutuseless.com", role = c("aut", "cre", "cph"))
+Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
+Description: Compile C code and call from R with automatically generated
+    wrapper functions.  Supports 'C' code written with R's Call syntax.  Allows
+    the user to specify pre-processor flags, linking flags and user specified
+    headers.  Multiple functions may be specified in a single block of code.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+URL: https://github.com/coolbutuseless/callme
+BugReports: https://github.com/coolbutuseless/callme/issues
 RoxygenNote: 7.3.1
 Imports:
     stringr

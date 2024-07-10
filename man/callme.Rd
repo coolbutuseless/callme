@@ -9,6 +9,7 @@ callme(
   cpp_flags = NULL,
   ld_flags = NULL,
   env = parent.frame(),
+  overwrite = "callme",
   verbosity = 0
 )
 }
@@ -29,6 +30,17 @@ library installed there.}
 \item{env}{environment into which to assign the R wrapper functions.
 Default: \code{parent.frame()}.  If \code{NULL} then no 
 assignment takes place.}
+
+\item{overwrite}{which existing variables can be overwritten when this function
+       creates wrapper variables? If permission not given to overwrite a 
+       variable which already exists in the environment, then an error is 
+       raised.
+\describe{
+\item{"callme"}{(Default) Only overwrite other functions created by \code{callme()}}
+\item{"all"}{All variables will be overwritten}
+\item{"functions"}{Only functions are overwritten}
+\item{"none"}{No variables may be overwritten}
+}}
 
 \item{verbosity}{Level of output: Default: 0. current max: 2}
 }

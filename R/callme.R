@@ -18,6 +18,16 @@
 #' @param env environment into which to assign the R wrapper functions.
 #'        Default: \code{parent.frame()}.  If \code{NULL} then no 
 #'        assignment takes place.
+#' @param overwrite which existing variables can be overwritten when this function
+#'        creates wrapper variables? If permission not given to overwrite a 
+#'        variable which already exists in the environment, then an error is 
+#'        raised.
+#' \describe{
+#' \item{"callme"}{(Default) Only overwrite other functions created by \code{callme()}}
+#' \item{"all"}{All variables will be overwritten}
+#' \item{"functions"}{Only functions are overwritten}
+#' \item{"none"}{No variables may be overwritten}
+#' }
 #' @param verbosity Level of output: Default: 0. current max: 2
 #'        
 #' @export
@@ -41,7 +51,8 @@
 #' # Use the auto-generated wrapper function
 #' calc(1, 2.5)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame(), verbosity = 0) {
+callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame(), 
+                   overwrite = "callme", verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
@@ -50,6 +61,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   stopifnot(length(code) == 1)
   stopifnot(nchar(code) > 0)
   stopifnot(!is.na(code))
+  stopifnot(overwrite %in% c('all', 'callme', 'functions', 'none'))
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create a new directory to work in.
@@ -163,11 +175,20 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!is.null(env)) {
     for (func_name in names(func_list)) {
-      if (exists(func_name, envir = env)) {
-        warning("Clobbering function: '", func_name, "'", call. = FALSE)
-      }
-      if (verbosity >= 1) {
-        message("Assigning new function: '", func_name, "()'")
+      if (exists(func_name, envir = env, inherits = FALSE)) {
+        var <- get0(func_name, envir = env, inherits = FALSE)
+        
+        if (
+          (overwrite == 'all') ||
+          (overwrite == 'callme' && inherits(var, 'callme')) ||
+          (overwrite == 'functions' && is.function(var)) 
+        ) {
+          # Allowed overwrite
+        } else {
+          stop("callme(): Not allowed to overwrite existing variable with new wrapper function '", func_name, "'", call. = FALSE)
+        }
+         
+        
       }
       assign(func_name, func_list[[func_name]], pos = env)
     }
@@ -301,7 +322,9 @@ create_wrapper_function <- function(decl, dll_file) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Parse function into R code and put in a named list
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  res <- list(eval(parse(text = func_str)))
+  func <- eval(parse(text = func_str))
+  class(func) <- "callme"
+  res <- list(func)
   names(res) <- func_name
   
   res
