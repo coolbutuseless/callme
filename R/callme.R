@@ -7,12 +7,12 @@
 #' 
 #' @param code C code following the \code{.Call()} conventions.  Must
 #'        also include any \code{#include} statements.
-#' @param cpp_flags character string of flags for the C pre-processor.
+#' @param PKG_CPPFLAGS character string of flags for the C pre-processor.
 #'        Default: NULL
-#'        e.g. \code{cpp_flags = "-I/opt/homebrew/include"} to add the include path 
+#'        e.g. \code{PKG_CPPFLAGS = "-I/opt/homebrew/include"} to add the include path 
 #'        for homebrew to the compilation step. 
-#' @param ld_flags character string of flags when linking. Default: NULL.
-#'        e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
+#' @param PKG_LDFLAGS character string of flags when linking. Default: NULL.
+#'        e.g. \code{PKG_LDFLAGS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
 #' @param env environment into which to assign the R wrapper functions.
@@ -39,19 +39,40 @@
 #' code <- "
 #' #include <R.h>
 #' #include <Rdefines.h>
-#' SEXP calc(SEXP val1, SEXP val2) {
-#'   return ScalarReal(asReal(val1) + asReal(val2));
-#' }"
 #' 
-#' # Need to keep a reference to the returned value in order to retain access
-#' # to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
-#' # when \code{'dll'} gets garbage collected.
+#' // Add 2 numbers
+#' SEXP add(SEXP val1, SEXP val2) {
+#'   return ScalarReal(asReal(val1) + asReal(val2));
+#' }
+#' 
+#' // Multiply 2 numbers
+#' SEXP mul(SEXP val1, SEXP val2) {
+#'   return ScalarReal(asReal(val1) * asReal(val2));
+#' }
+#' 
+#' // sqrt elements in a vector
+#' SEXP new_sqrt(SEXP vec) {
+#'   SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
+#'   double *res_ptr = REAL(res);
+#'   double *vec_ptr = REAL(vec);
+#'   for (int i = 0; i < length(vec); i++) {
+#'     res_ptr[i] = sqrt(vec_ptr[i]);
+#'   }
+#'   
+#'   UNPROTECT(1);
+#'   return res;
+#' }
+#' "
+#' 
+#' # compile the code and load into R
 #' callme(code)
 #' 
-#' # Use the auto-generated wrapper function
-#' calc(1, 2.5)
+#' # Call the functions
+#' add(99.5, 0.5)
+#' mul(99.5, 0.5)
+#' new_sqrt(c(1, 10, 100, 1000))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame(), 
+callme <- function(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = parent.frame(), 
                    overwrite = "callme", verbosity = 0) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,13 +130,13 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   # Write a 'Makevars' with the CPPFLAGS because as-far-as-I-know
   # you cannot set CPPFLAGs when doing "R CMD SHLIB" 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!is.null(cpp_flags)) {
-    stopifnot(is.character(cpp_flags))
-    stopifnot(length(cpp_flags) == 1)
-    stopifnot(nchar(cpp_flags) > 0)
-    stopifnot(!is.na(cpp_flags))
-    cpp_flags <- paste0("PKG_CPPFLAGS=", cpp_flags)
-    writeLines(cpp_flags, "Makevars")
+  if (!is.null(PKG_CPPFLAGS)) {
+    stopifnot(is.character(PKG_CPPFLAGS))
+    stopifnot(length(PKG_CPPFLAGS) == 1)
+    stopifnot(nchar(PKG_CPPFLAGS) > 0)
+    stopifnot(!is.na(PKG_CPPFLAGS))
+    PKG_CPPFLAGS <- paste0("PKG_CPPFLAGS=", PKG_CPPFLAGS)
+    writeLines(PKG_CPPFLAGS, "Makevars")
   }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,7 +157,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ret <- system2(
     command = paste0(R.home(component = "bin"), "/R"), 
-    args    = paste("CMD SHLIB", basename(c_file), ld_flags),
+    args    = paste("CMD SHLIB", basename(c_file), PKG_LDFLAGS),
     stdout  = stdout,
     stderr  = stdout
   )
@@ -159,7 +180,7 @@ callme <- function(code, cpp_flags = NULL, ld_flags = NULL, env = parent.frame()
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Load the DLL
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  dll <- dyn.load(dll_file)
+  dyn.load(dll_file)
   if (verbosity >= 2) {
     cat("dll file: ", dll_file, "\n")
   }
@@ -226,7 +247,7 @@ create_wrapper_functions <- function(code, dll_file) {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Extract function declarations which are consistent with .Call() semantics
+#' Extract function declarations which are consistent with .Call() syntax
 #' 
 #' @param code C code as single string.  This does not recurse into source
 #'        or header files referenced in the C code.

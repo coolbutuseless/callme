@@ -9,26 +9,26 @@
 ![](https://img.shields.io/badge/cool-useless-green.svg)
 <!-- badges: end -->
 
-`{callme}` compiles C code to loadable dynamic libraries callable via
-`.Call()`. This is useful for rapid prototyping of C code.
+`{callme}` compiles C code and generates wrappers so that the C code can
+be called easily from R.
 
-Code is defined in a character string, and must be valid C code callable
-via `.Call()`.
+Code is defined in a character string, and must be valid C code matching
+R’s `.Call()` syntax.
 
 Features:
 
-- Simple. Purpose is to support `.Call()` only.
-- Straightforward. Requires user to submit complete C code - including
+- Supports `.Call()` syntax only.
+- User submits complete C code - including functino declaration and
   header `#include` directives.
-- Flexible. Includes explicit handling for `PKG_CPPFLAGS` and `PKG_LIBS`
-  for setting C pre-processor flags, and library linking flags so code
-  can link to other libraries installed on the system.
+- Explicit handling for `PKG_CPPFLAGS` and `PKG_LDFLAGS` for setting C
+  pre-processor flags, and library linking flags so code can link to
+  other libraries installed on the system.
 - Generates R functions to call the compiled C functions.
 - Multiple functions allowed in a single code block.
 
 ### What’s in the box
 
-- `callme(code, cpp_flags = NULL, ld_flags = NULL, env = .GlobalEnv, verbosity = 0)`
+- `callme(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = .GlobalEnv, verbosity = 0)`
   compile the `code` and assign R functions into the nominated `env` in
   R.
 
@@ -60,25 +60,55 @@ code <- "
 #include <R.h>
 #include <Rdefines.h>
 
+// Add 2 numbers
 SEXP add(SEXP val1, SEXP val2) {
   return ScalarReal(asReal(val1) + asReal(val2));
+}
+
+// Multiply 2 numbers
+SEXP mul(SEXP val1, SEXP val2) {
+  return ScalarReal(asReal(val1) * asReal(val2));
+}
+
+// sqrt elements in a vector
+SEXP new_sqrt(SEXP vec) {
+  SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
+  double *res_ptr = REAL(res);
+  double *vec_ptr = REAL(vec);
+  for (int i = 0; i < length(vec); i++) {
+    res_ptr[i] = sqrt(vec_ptr[i]);
+  }
+  
+  UNPROTECT(1);
+  return res;
 }
 "
 
 # compile the code
 callme(code)
 
-# Call the function
+# Call the functions
 add(99.5, 0.5)
 ```
 
     #> [1] 100
 
+``` r
+mul(99.5, 0.5)
+```
+
+    #> [1] 49.75
+
+``` r
+new_sqrt(c(1, 10, 100, 1000))
+```
+
+    #> [1]  1.000000  3.162278 10.000000 31.622777
+
 ## Linking against an installed library
 
-In this example we want to get the version of the `zstd` library which
-is (already) installed on the computer, and return it as a character
-string.
+In this example we want to get the version of the `zstd` library (which
+is installed on the computer), and return it as a character string.
 
 We need to tell R when compiling the code:
 
@@ -100,76 +130,13 @@ SEXP zstd_version() {
 }
 )"
 
-# Compile the code
-callme(code, cpp_flags = "-I/opt/homebrew/include", ld_flags = "-L/opt/homebrew/lib -lzstd")
+# Compile the code 
+callme(code, 
+       PKG_CPPFLAGS = "-I/opt/homebrew/include", 
+       PKG_LDFLAGS  = "-L/opt/homebrew/lib -lzstd")
 
 # Call the function
 zstd_version()
 ```
 
     #> [1] "1.5.6"
-
-## Use in a code chunk in Rmarkdown/Quarto
-
-#### Set the `knitr` engine to handle `callme` code blocks
-
-``` r
-knitr::knit_engines$set(callme = callme::callme_engine)
-```
-
-#### Possible chunk options
-
-Possible configure variables at start of chunk:
-
-- `dllname` the variable name to hold the results of `callme()`.
-  Default: `dll`
-- `cpp_flags` the equivalent of the argument `callme(cpp_flags = ...)`
-- `ld_flags` the equivalent of the argument `callme(ld_flags = ...)`
-
-#### Example `callme` code chunk in Quarto
-
-```` markdown
-```{callme}
-#| dllname: mydll
-#include <R.h>
-#include <Rdefines.h>
-
-SEXP add(SEXP val1, SEXP val2) {
-  return ScalarReal(asReal(val1) + asReal(val2));
-}
-
-
-SEXP mul(SEXP val1, SEXP val2) {
-  return ScalarReal(asReal(val1) * asReal(val2));
-}
-```
-````
-
-#### Echo of code when knitting document
-
-``` c
-#| dllname: mydll
-```
-
-``` c
-#include <R.h>
-#include <Rdefines.h>
-
-SEXP add(SEXP val1, SEXP val2) {
-  return ScalarReal(asReal(val1) + asReal(val2));
-}
-
-
-SEXP mul(SEXP val1, SEXP val2) {
-  return ScalarReal(asReal(val1) * asReal(val2));
-}
-```
-
-#### Running the compiled C code in subsequent quarto chunks
-
-``` r
-add(3, 2)
-#> [1] 5
-mul(3, 2)
-#> [1] 6
-```

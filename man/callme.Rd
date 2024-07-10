@@ -6,8 +6,8 @@
 \usage{
 callme(
   code,
-  cpp_flags = NULL,
-  ld_flags = NULL,
+  PKG_CPPFLAGS = NULL,
+  PKG_LDFLAGS = NULL,
   env = parent.frame(),
   overwrite = "callme",
   verbosity = 0
@@ -17,13 +17,13 @@ callme(
 \item{code}{C code following the \code{.Call()} conventions.  Must
 also include any \code{#include} statements.}
 
-\item{cpp_flags}{character string of flags for the C pre-processor.
+\item{PKG_CPPFLAGS}{character string of flags for the C pre-processor.
 Default: NULL
-e.g. \code{cpp_flags = "-I/opt/homebrew/include"} to add the include path 
+e.g. \code{PKG_CPPFLAGS = "-I/opt/homebrew/include"} to add the include path 
 for homebrew to the compilation step.}
 
-\item{ld_flags}{character string of flags when linking. Default: NULL.
-e.g. \code{ld_flags = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
+\item{PKG_LDFLAGS}{character string of flags when linking. Default: NULL.
+e.g. \code{PKG_LDFLAGS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
 
@@ -55,15 +55,36 @@ See also \code{?SHLIB}
 code <- "
 #include <R.h>
 #include <Rdefines.h>
-SEXP calc(SEXP val1, SEXP val2) {
-  return ScalarReal(asReal(val1) + asReal(val2));
-}"
 
-# Need to keep a reference to the returned value in order to retain access
-# to the compiled functions.  I.e. the dll will be unloaded (via \code{dyn.unload()})
-# when \code{'dll'} gets garbage collected.
+// Add 2 numbers
+SEXP add(SEXP val1, SEXP val2) {
+  return ScalarReal(asReal(val1) + asReal(val2));
+}
+
+// Multiply 2 numbers
+SEXP mul(SEXP val1, SEXP val2) {
+  return ScalarReal(asReal(val1) * asReal(val2));
+}
+
+// sqrt elements in a vector
+SEXP new_sqrt(SEXP vec) {
+  SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
+  double *res_ptr = REAL(res);
+  double *vec_ptr = REAL(vec);
+  for (int i = 0; i < length(vec); i++) {
+    res_ptr[i] = sqrt(vec_ptr[i]);
+  }
+  
+  UNPROTECT(1);
+  return res;
+}
+"
+
+# compile the code and load into R
 callme(code)
 
-# Use the auto-generated wrapper function
-calc(1, 2.5)
+# Call the functions
+add(99.5, 0.5)
+mul(99.5, 0.5)
+new_sqrt(c(1, 10, 100, 1000))
 }
