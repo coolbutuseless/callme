@@ -285,7 +285,6 @@ code_sqrt_simd_avx <- r"(
 #endif
 
 SEXP sqrt_simd_avx(SEXP vec) {
-  if (length(vec) % 4 != 0) { error("must be multiple of 4"); }
 
   SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
   double *vec_ptr = REAL(vec);
