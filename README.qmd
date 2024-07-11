@@ -196,8 +196,7 @@ bench::mark(
 ```
 
 
-This simple implentation is slightly faster than the built-in version in R.  It's
-probably faster because it doesn't do *anything* to check the sanity of the inputs.
+This simple C implementation is slightly slower than R's builtin version!
 
 
 ### Bespoke `sqrt()` in C with unrolled loops

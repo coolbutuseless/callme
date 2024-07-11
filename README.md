@@ -198,12 +198,11 @@ bench::mark(
     #> # A tibble: 2 × 6
     #>   expression            min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>       <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)            72µs    106µs     9103.     625KB    107. 
-    #> 2 sqrt_simple(vec)    135µs    159µs     6178.     625KB     72.5
+    #> 1 sqrt(vec)          72.1µs    125µs     7889.     625KB     90.8
+    #> 2 sqrt_simple(vec)  135.5µs    184µs     5353.     625KB     64.1
 
-This simple implentation is slightly faster than the built-in version in
-R. It’s probably faster because it doesn’t do *anything* to check the
-sanity of the inputs.
+This simple C implementation is slightly slower than R’s builtin
+version!
 
 ### Bespoke `sqrt()` in C with unrolled loops
 
@@ -258,9 +257,9 @@ bench::mark(
     #> # A tibble: 3 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)              72µs  106.1µs     9084.     625KB    113. 
-    #> 2 sqrt_simple(vec)    135.3µs  157.8µs     6291.     625KB     76.2
-    #> 3 sqrt_unrolled(vec)   45.4µs   72.2µs    13543.     625KB    166.
+    #> 1 sqrt(vec)              72µs    125µs     7752.     625KB     98.5
+    #> 2 sqrt_simple(vec)    135.5µs    178µs     5471.     625KB     67.2
+    #> 3 sqrt_unrolled(vec)   45.7µs     88µs    11193.     625KB    136.
 
 The above benchmark shows that unrolling the loop gives a signifcant
 speed advantage over the simple implementation
@@ -335,10 +334,10 @@ bench::mark(
     #> # A tibble: 4 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)              72µs  104.2µs     9267.     625KB    120. 
-    #> 2 sqrt_simple(vec)    135.4µs  158.1µs     6354.     625KB     84.2
-    #> 3 sqrt_unrolled(vec)   45.5µs   73.7µs    13687.     625KB    174. 
-    #> 4 sqrt_simd_avx(vec)   34.7µs   66.8µs    15512.     625KB    192.
+    #> 1 sqrt(vec)            72.2µs  125.7µs     7856.     625KB    102. 
+    #> 2 sqrt_simple(vec)    142.5µs  185.4µs     5385.     625KB     68.1
+    #> 3 sqrt_unrolled(vec)   45.6µs   80.4µs    12297.     625KB    151. 
+    #> 4 sqrt_simd_avx(vec)   34.9µs   74.1µs    13436.     625KB    166.
 
 Using SIMD instructions further speeds up the code! This speed-up occurs
 even though no ARM SIMD (i.e. Neon) was written. Instead, I wrote AVX
