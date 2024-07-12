@@ -6,8 +6,9 @@
 \usage{
 compile(
   code,
+  CFLAGS = NULL,
   PKG_CPPFLAGS = NULL,
-  PKG_LDFLAGS = NULL,
+  PKG_LIBS = NULL,
   env = parent.frame(),
   overwrite = "callme",
   verbosity = 0
@@ -17,13 +18,20 @@ compile(
 \item{code}{C code following the \code{.Call()} conventions.  Must
 also include any \code{#include} statements.}
 
+\item{CFLAGS}{character string of flags for the C compiler. e.g. "-O3"
+Default: NULL.  If specified this value will \emph{replace} the
+default \code{CFLAGS} R would normally use.  To see these default
+flags use \code{cflags_default()}.}
+
 \item{PKG_CPPFLAGS}{character string of flags for the C pre-processor.
+Flags such as "-I", "-D" and "-U" go here.
 Default: NULL
 e.g. \code{PKG_CPPFLAGS = "-I/opt/homebrew/include"} to add the include path 
 for homebrew to the compilation step.}
 
-\item{PKG_LDFLAGS}{character string of flags when linking. Default: NULL.
-e.g. \code{PKG_LDFLAGS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
+\item{PKG_LIBS}{character string of flags when linking. "-L" and "-l" flags
+go here. Default: NULL.
+e.g. \code{PKG_LIBS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 libraries in the linker search path and to link to the \code{zstd}
 library installed there.}
 

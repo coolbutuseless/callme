@@ -1,13 +1,13 @@
 Package: callme
 Type: Package
 Title: Compile and Call Inline C Functions from R
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: 
     person("Mike", "Cheng", , "mikefc@coolbutuseless.com", role = c("aut", "cre", "cph"))
 Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
-Description: Compile C code and call from R with automatically generated
-    wrapper functions.  Supports 'C' code written with R's Call syntax.  Allows
-    the user to specify pre-processor flags, linking flags and user specified
+Description: Compile inline 'C' code and easily call from R with automatically generated
+    wrapper functions.  Supports 'C' code written with R's .Call() syntax.  Allows
+    the user to specify pre-processor flags, compiler flags, linking flags and user specified
     headers.  Multiple functions may be specified in a single block of code.
 License: MIT + file LICENSE
 Encoding: UTF-8

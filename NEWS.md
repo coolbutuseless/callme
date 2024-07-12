@@ -1,5 +1,11 @@
 
-# callme 0.1.8
+# callme 0.1.9  2024-07-13
+
+* Support `CFLAGS` argument to replace the default C compiler flags
+* `PKG_LDFLAGS` replaced by `PKG_LIBS` and now used in `Makevars` file
+  rather than on the command line.
+
+# callme 0.1.8  2024-07-10
 
 * Now writes wrapper functions into the nominated environment
 

@@ -21,17 +21,18 @@ Features:
 - Supports `.Call()` syntax only.
 - User submits complete C code - including function declaration and
   header `#include` directives.
-- Explicit handling for `PKG_CPPFLAGS` and `PKG_LDFLAGS` for setting C
-  pre-processor flags, and library linking flags so code can link to
-  other libraries installed on the system.
+- Explicit handling for `CFLAGS`, `PKG_CPPFLAGS` and `PKG_LIBS` for
+  setting C pre-processor flags, compiler flags and library linking
+  flags so code can link to other libraries installed on the system.
 - Generates R functions to call the compiled C functions.
 - Multiple functions allowed in a single code block.
 
 ### What’s in the box
 
-- `compile(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = .GlobalEnv, verbosity = 0)`
-  compile the `code` and assign R functions into the nominated `env` in
-  R.
+- `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBSL, env, verbosity)`
+  compile the C `code` and assign R functions into the nominated `env`
+  in R.
+- `cflags_default()` the default C compiler flags R uses on your system
 
 ### `.Call()` compatible C functions
 
@@ -134,7 +135,7 @@ SEXP zstd_version() {
 # Compile the code 
 compile(code, 
        PKG_CPPFLAGS = "-I/opt/homebrew/include", 
-       PKG_LDFLAGS  = "-L/opt/homebrew/lib -lzstd")
+       PKG_LIBS  = "-L/opt/homebrew/lib -lzstd")
 
 # Call the function
 zstd_version()
@@ -157,6 +158,17 @@ In the following sections I have written
 - `sqrt_simd_avx()` which uses AVX SIMD instructions. This is
   particularly interesting as the code is running on macOS which doesn’t
   have AVX instructions!
+
+Te relative performance of the following implementations of `sqrt` will
+be very very dependent upon:
+
+- Actual CPU
+- Operating System
+- R version (and how it was compiled)
+- Version of gcc / clang
+
+The following benchmark numbers are for an Apple M2 CPU. Your results
+will vary.
 
 ### Bespoke `sqrt()` in C
 
@@ -198,8 +210,8 @@ bench::mark(
     #> # A tibble: 2 × 6
     #>   expression            min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>       <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)          72.8µs    123µs     7858.     625KB     91.4
-    #> 2 sqrt_simple(vec)  135.8µs    187µs     5264.     625KB     63.9
+    #> 1 sqrt(vec)            72µs    110µs     8920.     625KB    105. 
+    #> 2 sqrt_simple(vec)    135µs    161µs     6199.     625KB     72.7
 
 This simple C implementation is slightly slower than R’s builtin
 version!
@@ -257,9 +269,9 @@ bench::mark(
     #> # A tibble: 3 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)            72.1µs  128.6µs     7641.     625KB     94.4
-    #> 2 sqrt_simple(vec)    135.4µs    184µs     5317.     625KB     66.0
-    #> 3 sqrt_unrolled(vec)   45.5µs   88.2µs    11002.     625KB    134.
+    #> 1 sqrt(vec)              72µs  110.2µs     8829.     625KB    112. 
+    #> 2 sqrt_simple(vec)    135.4µs  160.7µs     6199.     625KB     74.4
+    #> 3 sqrt_unrolled(vec)   45.5µs   78.4µs    12867.     625KB    156.
 
 The above benchmark shows that unrolling the loop gives a signifcant
 speed advantage over the simple implementation
@@ -316,10 +328,12 @@ SEXP sqrt_simd_avx(SEXP vec) {
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # compile the code 
+# SIMDe docs recommend setting "-O3" 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 callme::compile(code_sqrt_simd_avx, 
-                PKG_CPPFLAGS = '-march=native -O3 -I"/Users/mike/projectsdata/simde/"')
-
+                CFLAGS = paste(cflags_default(), "-march=native -O3"),
+                PKG_CPPFLAGS = '-I"/Users/mike/projectsdata/simde/"')
+  
 vec <- runif(80000)
 bench::mark(
   sqrt(vec),
@@ -333,10 +347,10 @@ bench::mark(
     #> # A tibble: 4 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)            72.1µs  126.4µs     7686.     625KB    102. 
-    #> 2 sqrt_simple(vec)    135.4µs  179.8µs     5437.     625KB     64.9
-    #> 3 sqrt_unrolled(vec)   45.6µs     88µs    11055.     625KB    138. 
-    #> 4 sqrt_simd_avx(vec)   34.8µs   80.5µs    12285.     625KB    152.
+    #> 1 sqrt(vec)              72µs  109.3µs     8940.     625KB    113. 
+    #> 2 sqrt_simple(vec)    135.5µs  180.1µs     5575.     625KB     68.8
+    #> 3 sqrt_unrolled(vec)   45.6µs   86.7µs    11575.     625KB    143. 
+    #> 4 sqrt_simd_avx(vec)   34.8µs   75.8µs    13351.     625KB    163.
 
 Using SIMD instructions further speeds up the code! This speed-up occurs
 even though no ARM SIMD (i.e. Neon) was written. Instead, I wrote AVX

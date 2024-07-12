@@ -33,16 +33,17 @@ Features:
 * Supports `.Call()` syntax only.
 * User submits complete C code - including function declaration and header `#include` 
   directives.
-* Explicit handling for `PKG_CPPFLAGS` and `PKG_LDFLAGS` for setting 
-  C pre-processor flags, and library linking flags so code can link to other libraries 
-  installed on the system.
+* Explicit handling for `CFLAGS`, `PKG_CPPFLAGS` and `PKG_LIBS` for setting 
+  C pre-processor flags, compiler flags and library linking flags so code can 
+  link to other libraries installed on the system.
 * Generates R functions to call the compiled C functions.
 * Multiple functions allowed in a single code block.
 
 ### What's in the box
 
-* `compile(code, PKG_CPPFLAGS = NULL, PKG_LDFLAGS = NULL, env = .GlobalEnv, verbosity = 0)` 
-compile the `code` and assign R functions into the nominated `env` in R.
+* `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBSL, env, verbosity)` 
+compile the C `code` and assign R functions into the nominated `env` in R.
+* `cflags_default()` the default C compiler flags R uses on your system
 
 ### `.Call()` compatible C functions
 
@@ -136,7 +137,7 @@ SEXP zstd_version() {
 # Compile the code 
 compile(code, 
        PKG_CPPFLAGS = "-I/opt/homebrew/include", 
-       PKG_LDFLAGS  = "-L/opt/homebrew/lib -lzstd")
+       PKG_LIBS  = "-L/opt/homebrew/lib -lzstd")
 
 # Call the function
 zstd_version()
@@ -157,6 +158,18 @@ In the following sections I have written
   the for loop.
 * `sqrt_simd_avx()` which uses AVX SIMD instructions.  This is particularly 
   interesting as the code is running on macOS which doesn't have AVX instructions!
+
+
+Te relative performance of the following implementations of `sqrt` will be
+very very dependent upon:
+
+* Actual CPU 
+* Operating System 
+* R version (and how it was compiled)
+* Version of gcc / clang
+
+The following benchmark numbers are for an Apple M2 CPU.  Your results will 
+vary.
 
 ### Bespoke `sqrt()` in C
 
@@ -307,10 +320,12 @@ SEXP sqrt_simd_avx(SEXP vec) {
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # compile the code 
+# SIMDe docs recommend setting "-O3" 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 callme::compile(code_sqrt_simd_avx, 
-                PKG_CPPFLAGS = '-march=native -O3 -I"/Users/mike/projectsdata/simde/"')
-
+                CFLAGS = paste(cflags_default(), "-march=native -O3"),
+                PKG_CPPFLAGS = '-I"/Users/mike/projectsdata/simde/"')
+  
 vec <- runif(80000)
 bench::mark(
   sqrt(vec),
