@@ -10,15 +10,13 @@
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`{callme}` compiles C code and generates wrappers so that the C code can
-be called easily from R.
-
-Code is defined in a character string, and must be valid C code matching
-R’s `.Call()` syntax.
+`{callme}` compiles inline C code and generates wrappers so that the C
+code can be easily called from R.
 
 Features:
 
-- Supports `.Call()` syntax only.
+- Supports `.Call()` syntax only with function signatures like
+  `SEXP funcname(SEXP arg1, SEXP arg2, ...)`
 - User submits complete C code - including function declaration and
   header `#include` directives.
 - Explicit handling for `CFLAGS`, `PKG_CPPFLAGS` and `PKG_LIBS` for
@@ -29,7 +27,7 @@ Features:
 
 ### What’s in the box
 
-- `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBSL, env, verbosity)`
+- `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBS, env, verbosity)`
   compile the C `code` and assign R functions into the nominated `env`
   in R.
 - `cflags_default()` the default C compiler flags R uses on your system
@@ -52,8 +50,9 @@ remotes::install_github('coolbutuseless/callme')
 
 ## Example
 
-The following example compiles a code snippet into a C library and then
-shows how to call the function from R.
+The following example compiles a code snippet into a C library and
+creates a wrapper function in R (of the same name) which can be used to
+call the compiled code.
 
 ``` r
 library(callme)
@@ -118,8 +117,8 @@ We need to tell R when compiling the code:
 - to look for the actual `zstd` library in `/opt/homebrew/lib`.
 - to link to the `zstd` library (`-lzstd`)
 
-Note: This if for `zstd` installed via `homebrew` on macOS. Paths will
-be different for other operating systems.
+Note: This code works for `zstd` installed via `homebrew` on macOS.
+Paths will be different for other operating systems.
 
 ``` r
 code <- r"(
@@ -135,7 +134,7 @@ SEXP zstd_version() {
 # Compile the code 
 compile(code, 
        PKG_CPPFLAGS = "-I/opt/homebrew/include", 
-       PKG_LIBS  = "-L/opt/homebrew/lib -lzstd")
+       PKG_LIBS     = "-L/opt/homebrew/lib -lzstd")
 
 # Call the function
 zstd_version()
@@ -210,8 +209,8 @@ bench::mark(
     #> # A tibble: 2 × 6
     #>   expression            min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>       <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)            72µs    110µs     8920.     625KB    105. 
-    #> 2 sqrt_simple(vec)    135µs    161µs     6199.     625KB     72.7
+    #> 1 sqrt(vec)            72µs    108µs     9116.     625KB    105. 
+    #> 2 sqrt_simple(vec)    135µs    159µs     6205.     625KB     74.6
 
 This simple C implementation is slightly slower than R’s builtin
 version!
@@ -228,6 +227,9 @@ chosen to manually unroll the main loop.
 # Manual loop unrolling
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 code_sqrt_unrolled <- r"(
+#include <R.h>
+#include <Rdefines.h>
+
 // sqrt elements in a vector
 SEXP sqrt_unrolled(SEXP vec) {
   SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
@@ -269,9 +271,9 @@ bench::mark(
     #> # A tibble: 3 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)              72µs  110.2µs     8829.     625KB    112. 
-    #> 2 sqrt_simple(vec)    135.4µs  160.7µs     6199.     625KB     74.4
-    #> 3 sqrt_unrolled(vec)   45.5µs   78.4µs    12867.     625KB    156.
+    #> 1 sqrt(vec)              72µs    117µs     8132.     625KB    102. 
+    #> 2 sqrt_simple(vec)    135.4µs    161µs     6112.     625KB     73.9
+    #> 3 sqrt_unrolled(vec)   45.5µs     73µs    13482.     625KB    163.
 
 The above benchmark shows that unrolling the loop gives a signifcant
 speed advantage over the simple implementation
@@ -297,6 +299,9 @@ The following SIMD code should work on both x86 **and** mac ARM.
 # Using AVX SIMD instructions and the "SIMDE" compatibility library
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 code_sqrt_simd_avx <- r"(
+#include <R.h>
+#include <Rdefines.h>
+
 #define SIMDE_ENABLE_NATIVE_ALIASES 1
 
 #if defined(__AVX__) || defined(__aarch64__)
@@ -347,10 +352,10 @@ bench::mark(
     #> # A tibble: 4 × 6
     #>   expression              min   median `itr/sec` mem_alloc `gc/sec`
     #>   <bch:expr>         <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-    #> 1 sqrt(vec)              72µs  109.3µs     8940.     625KB    113. 
-    #> 2 sqrt_simple(vec)    135.5µs  180.1µs     5575.     625KB     68.8
-    #> 3 sqrt_unrolled(vec)   45.6µs   86.7µs    11575.     625KB    143. 
-    #> 4 sqrt_simd_avx(vec)   34.8µs   75.8µs    13351.     625KB    163.
+    #> 1 sqrt(vec)              72µs  109.7µs     8708.     625KB    107. 
+    #> 2 sqrt_simple(vec)    135.4µs    161µs     6096.     625KB     75.0
+    #> 3 sqrt_unrolled(vec)   45.5µs   73.7µs    13356.     625KB    165. 
+    #> 4 sqrt_simd_avx(vec)   34.7µs   67.2µs    15131.     625KB    187.
 
 Using SIMD instructions further speeds up the code! This speed-up occurs
 even though no ARM SIMD (i.e. Neon) was written. Instead, I wrote AVX

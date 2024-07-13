@@ -13,7 +13,7 @@ cflags_default <- function() {
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Run code with the given R_MAKEVARS_USER setting
+# Run code with the given R_MAKEVARS_USER filename
 # Similar idea to 'withr::with_makevars()'
 #
 # The reason this is done with "R_MAKEVARS_USER + CFLAGS" and not 
@@ -23,6 +23,10 @@ cflags_default <- function() {
 #
 # but 'CFLAGS' **replaces** R's default CFLAGS, i.e.
 #    clang <CFLAGS> file.c
+#
+# @param R_MAKEVARS_USER filename for makevars-user
+# @param code code to execute
+# @return returns result of executing code
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 with_makevars_file_env <- function(R_MAKEVARS_USER, code) {
   default <- Sys.getenv('R_MAKEVARS_USER')
@@ -36,14 +40,23 @@ with_makevars_file_env <- function(R_MAKEVARS_USER, code) {
 }
 
 
+assert_single_string <- function(x) {
+  stopifnot(is.character(x))
+  stopifnot(length(x) == 1)
+  stopifnot(nchar(x) > 0)
+  stopifnot(!is.na(x))
+}
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Compile C code and load into R for use with \code{.Call()}
+#' Compile C code and create wrapper functions to call from R
 #' 
-#' See also \code{?SHLIB}
+#' This function uses the \code{R CMD SHLIB} process to compile
+#' C code into a linked library.  This library is then loaded, and 
+#' appropriate functions created in R to call into this library.  See also: \code{?SHLIB}
 #' 
 #' @param code C code following the \code{.Call()} conventions.  Must
-#'        also include any \code{#include} statements.
+#'        also include any \code{#include} statements.  
 #' @param CFLAGS character string of flags for the C compiler. e.g. "-O3"
 #'        Default: NULL.  If specified this value will \emph{replace} the
 #'        default \code{CFLAGS} R would normally use.  To see these default
@@ -53,30 +66,29 @@ with_makevars_file_env <- function(R_MAKEVARS_USER, code) {
 #'        Default: NULL
 #'        e.g. \code{PKG_CPPFLAGS = "-I/opt/homebrew/include"} to add the include path 
 #'        for homebrew to the compilation step. 
-#' @param PKG_LIBS character string of flags when linking. "-L" and "-l" flags
+#' @param PKG_LIBS character string of flags for linking. "-L" and "-l" flags
 #'        go here. Default: NULL.
 #'        e.g. \code{PKG_LIBS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 #'        libraries in the linker search path and to link to the \code{zstd}
 #'        library installed there. 
 #' @param env environment into which to assign the R wrapper functions.
 #'        Default: \code{parent.frame()}.  If \code{NULL} then no 
-#'        assignment takes place.
-#' @param overwrite which existing variables can be overwritten when this function
+#'        assignment takes place and the (invisible) return value should
+#'        be assigned to a variable to access the compiled code.
+#' @param overwrite Which existing variables can be overwritten when this function
 #'        creates wrapper variables? If permission not given to overwrite a 
 #'        variable which already exists in the environment, then an error is 
 #'        raised.
 #' \describe{
-#' \item{"callme"}{(Default) Only overwrite other functions created by this package}
+#' \item{"callme"}{(Default) Only overwrite functions created by this package}
 #' \item{"all"}{All variables will be overwritten}
 #' \item{"functions"}{Only functions are overwritten}
 #' \item{"none"}{No variables may be overwritten}
 #' }
-#' @param verbosity Level of output: Default: 0. current max: 2
-#'        
-#' @export
+#' @param verbosity Level of output: Default: 0. Max level: 4
 #' 
 #' @return Invisibly returns a named list of R functions. Each R function 
-#'         calls to the equivalent C functions.  
+#'         calls to the equivalent C function.  
 #'         
 #' @examples
 #' code <- "
@@ -114,6 +126,8 @@ with_makevars_file_env <- function(R_MAKEVARS_USER, code) {
 #' add(99.5, 0.5)
 #' mul(99.5, 0.5)
 #' new_sqrt(c(1, 10, 100, 1000))
+#'        
+#' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, env = parent.frame(), 
                     overwrite = "callme", verbosity = 0) {
@@ -121,12 +135,12 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  stopifnot(is.character(code))
-  stopifnot(length(code) == 1)
-  stopifnot(nchar(code) > 0)
-  stopifnot(!is.na(code))
+  assert_single_string(code)
   stopifnot(overwrite %in% c('all', 'callme', 'functions', 'none'))
   
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Dump flags if verbosity is very high
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (verbosity >= 4) {
     if (!is.null(CFLAGS)) {
       message("CFLAGS      : ", CFLAGS)
@@ -140,7 +154,7 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Create a new directory to work in.
+  # Create a new directory to work in.   YYYYmmdd-HHMM-[8randomchars]
   # This is so we don't clobber any other 'Makevars' file
   # which might exist.  e.g. two R processes trying to run 'compile()' at 
   # the same time.
@@ -165,9 +179,12 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   setwd(tmp_dir)
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Check if we have the two required includes
+  # Check if we have the two required includes.
   #  #include <R.h>
   #  #include <Rdefines.h>
+  #
+  # This is the only allowed manipulation of the C source code. 
+  # Even then, I'm not broadcasting that I'm doing it :)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!grepl("#include\\s+<Rdefines.h>", code)) {
     code <- paste("#include <Rdefines.h>", code, sep = "\n")
@@ -189,10 +206,7 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   makevars_user <- file.path(tmp_dir, "makevars-user.txt")
   
   if (!is.null(CFLAGS)) {
-    stopifnot(is.character(CFLAGS))
-    stopifnot(length(CFLAGS) == 1)
-    stopifnot(nchar(CFLAGS) > 0)
-    stopifnot(!is.na(CFLAGS))
+    assert_single_string(CFLAGS)
     CFLAGS <- paste0("CFLAGS=", CFLAGS)
     writeLines(CFLAGS, makevars_user)
   }
@@ -203,21 +217,14 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   makevars <- c("")
   
-  
   if (!is.null(PKG_CPPFLAGS)) {
-    stopifnot(is.character(PKG_CPPFLAGS))
-    stopifnot(length(PKG_CPPFLAGS) == 1)
-    stopifnot(nchar(PKG_CPPFLAGS) > 0)
-    stopifnot(!is.na(PKG_CPPFLAGS))
+    assert_single_string(PKG_CPPFLAGS)
     PKG_CPPFLAGS <- paste0("PKG_CPPFLAGS=", PKG_CPPFLAGS)
     makevars <- c(makevars, PKG_CPPFLAGS)
   }
   
   if (!is.null(PKG_LIBS)) {
-    stopifnot(is.character(PKG_LIBS))
-    stopifnot(length(PKG_LIBS) == 1)
-    stopifnot(nchar(PKG_LIBS) > 0)
-    stopifnot(!is.na(PKG_LIBS))
+    assert_single_string(PKG_LIBS)
     PKG_LIBS <- paste0("PKG_LIBS=", PKG_LIBS)
     makevars <- c(makevars, PKG_LIBS)
   }
@@ -225,7 +232,8 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   writeLines(makevars, "Makevars")
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Setup stdout/stderr
+  # Setup stdout/stderr to print to console if verbosity is non-zero
+  # otherwise just captured to the files named 'stdout', 'stderr'
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (verbosity > 0) {
     stdout = ""  # echo to R console
@@ -262,7 +270,6 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
     }
     return(NULL)
   }
-  
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Load the DLL

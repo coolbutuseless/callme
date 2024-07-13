@@ -22,15 +22,12 @@ library(callme)
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`{callme}` compiles C code and generates wrappers so that the C code can 
-be called easily from R.
-
-Code is defined in a character string, and must be valid C code matching R's
-`.Call()` syntax.
+`{callme}` compiles inline C code and generates wrappers so that the C code can 
+be easily called from R.
 
 Features:
 
-* Supports `.Call()` syntax only.
+* Supports `.Call()` syntax only with function signatures like `SEXP funcname(SEXP arg1, SEXP arg2, ...)`
 * User submits complete C code - including function declaration and header `#include` 
   directives.
 * Explicit handling for `CFLAGS`, `PKG_CPPFLAGS` and `PKG_LIBS` for setting 
@@ -41,7 +38,7 @@ Features:
 
 ### What's in the box
 
-* `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBSL, env, verbosity)` 
+* `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBS, env, verbosity)` 
 compile the C `code` and assign R functions into the nominated `env` in R.
 * `cflags_default()` the default C compiler flags R uses on your system
 
@@ -62,8 +59,9 @@ remotes::install_github('coolbutuseless/callme')
 
 ## Example
 
-The following example compiles a code snippet into a C library and then 
-shows how to call the function from R.
+The following example compiles a code snippet into a C library and creates
+a wrapper function in R (of the same name) which can be used to call the
+compiled code.
 
 
 ```{r example_simple, eval = TRUE}
@@ -120,7 +118,7 @@ We need to tell R when compiling the code:
 * to look for the actual `zstd` library in `/opt/homebrew/lib`.
 * to link to the `zstd` library (`-lzstd`)
 
-Note: This if for `zstd` installed via `homebrew` on macOS.  Paths will 
+Note: This code works for `zstd` installed via `homebrew` on macOS.  Paths will 
 be different for other operating systems.
 
 ```{r eval=TRUE}
@@ -137,7 +135,7 @@ SEXP zstd_version() {
 # Compile the code 
 compile(code, 
        PKG_CPPFLAGS = "-I/opt/homebrew/include", 
-       PKG_LIBS  = "-L/opt/homebrew/lib -lzstd")
+       PKG_LIBS     = "-L/opt/homebrew/lib -lzstd")
 
 # Call the function
 zstd_version()
@@ -223,6 +221,9 @@ chosen to manually unroll the main loop.
 # Manual loop unrolling
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 code_sqrt_unrolled <- r"(
+#include <R.h>
+#include <Rdefines.h>
+
 // sqrt elements in a vector
 SEXP sqrt_unrolled(SEXP vec) {
   SEXP res = PROTECT(allocVector(REALSXP, length(vec)));
@@ -289,6 +290,9 @@ The following SIMD code should work on both x86 **and** mac ARM.
 # Using AVX SIMD instructions and the "SIMDE" compatibility library
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 code_sqrt_simd_avx <- r"(
+#include <R.h>
+#include <Rdefines.h>
+
 #define SIMDE_ENABLE_NATIVE_ALIASES 1
 
 #if defined(__AVX__) || defined(__aarch64__)

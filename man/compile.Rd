@@ -2,7 +2,7 @@
 % Please edit documentation in R/compile.R
 \name{compile}
 \alias{compile}
-\title{Compile C code and load into R for use with \code{.Call()}}
+\title{Compile C code and create wrapper functions to call from R}
 \usage{
 compile(
   code,
@@ -29,7 +29,7 @@ Default: NULL
 e.g. \code{PKG_CPPFLAGS = "-I/opt/homebrew/include"} to add the include path 
 for homebrew to the compilation step.}
 
-\item{PKG_LIBS}{character string of flags when linking. "-L" and "-l" flags
+\item{PKG_LIBS}{character string of flags for linking. "-L" and "-l" flags
 go here. Default: NULL.
 e.g. \code{PKG_LIBS = "-L/opt/homebrew/lib -lzstd"} to include the homebrew 
 libraries in the linker search path and to link to the \code{zstd}
@@ -37,27 +37,30 @@ library installed there.}
 
 \item{env}{environment into which to assign the R wrapper functions.
 Default: \code{parent.frame()}.  If \code{NULL} then no 
-assignment takes place.}
+assignment takes place and the (invisible) return value should
+be assigned to a variable to access the compiled code.}
 
-\item{overwrite}{which existing variables can be overwritten when this function
+\item{overwrite}{Which existing variables can be overwritten when this function
        creates wrapper variables? If permission not given to overwrite a 
        variable which already exists in the environment, then an error is 
        raised.
 \describe{
-\item{"callme"}{(Default) Only overwrite other functions created by this package}
+\item{"callme"}{(Default) Only overwrite functions created by this package}
 \item{"all"}{All variables will be overwritten}
 \item{"functions"}{Only functions are overwritten}
 \item{"none"}{No variables may be overwritten}
 }}
 
-\item{verbosity}{Level of output: Default: 0. current max: 2}
+\item{verbosity}{Level of output: Default: 0. Max level: 4}
 }
 \value{
 Invisibly returns a named list of R functions. Each R function 
-        calls to the equivalent C functions.
+        calls to the equivalent C function.
 }
 \description{
-See also \code{?SHLIB}
+This function uses the \code{R CMD SHLIB} process to compile
+C code into a linked library.  This library is then loaded, and 
+appropriate functions created in R to call into this library.  See also: \code{?SHLIB}
 }
 \examples{
 code <- "
@@ -95,4 +98,5 @@ compile(code)
 add(99.5, 0.5)
 mul(99.5, 0.5)
 new_sqrt(c(1, 10, 100, 1000))
+       
 }
