@@ -7,7 +7,7 @@ Authors@R:
 Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
 Description: Compile inline 'C' code and easily call with
     automatically generated wrapper functions.  Supports 'C' code written
-    with R's .Call() syntax.  Allows for customisation of pre-processor
+    with R's .Call() syntax.  Allows for customisation of preprocessor
     flags, compiler flags, linking flags and user-specified headers.
     Multiple functions may be define in a single block of code.
 License: MIT + file LICENSE
