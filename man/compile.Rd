@@ -40,15 +40,15 @@ Default: \code{parent.frame()}.  If \code{NULL} then no
 assignment takes place and the (invisible) return value should
 be assigned to a variable to access the compiled code.}
 
-\item{overwrite}{Which existing variables can be overwritten when this function
-       creates wrapper variables? If permission not given to overwrite a 
-       variable which already exists in the environment, then an error is 
-       raised.
+\item{overwrite}{Which existing variables can be overwritten when wrapper 
+       functions are created in the given environment? An error will be
+       raised if the name of the wrapper function already exists in 
+       the environment and permission has not been given to overwrite.
 \describe{
-\item{"callme"}{(Default) Only overwrite functions created by this package}
-\item{"all"}{All variables will be overwritten}
-\item{"functions"}{Only functions are overwritten}
-\item{"none"}{No variables may be overwritten}
+\item{"callme"}{(Default) Only functions created by this package can be overwritten}
+\item{"all"}{All objects can be overwritten}
+\item{"functions"}{Only functions can be overwritten}
+\item{"none"}{No existing objects can be overwritten}
 }}
 
 \item{verbosity}{Level of output: Default: 0. Max level: 4}

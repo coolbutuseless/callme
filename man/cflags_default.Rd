@@ -7,7 +7,7 @@
 cflags_default()
 }
 \value{
-character string of default CFLAGS
+character string of default CFLAGS for this R installation
 }
 \description{
 Retrieve the default CFLAGS R uses to compile shared libraries
