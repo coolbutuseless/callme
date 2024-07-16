@@ -8,7 +8,7 @@
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 cflags_default <- function() {
-  system("R CMD CONFIG CFLAGS", intern = TRUE)
+  system("R CMD config CFLAGS", intern = TRUE)
 }
 
 
