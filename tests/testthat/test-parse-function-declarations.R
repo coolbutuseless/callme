@@ -39,7 +39,7 @@ SEXP not_valid(int vara, SEXP varb) {
   )
   
   
-  funcs <- callme:::create_wrapper_functions(code, dll_file = "jnk")
+  funcs <- callme:::create_wrapper_functions(code, dll_file = "jnk", invisible = FALSE)
   
   # Created 3 functions
   expect_length(funcs, 3)

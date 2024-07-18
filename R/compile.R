@@ -58,8 +58,10 @@ assert_single_string <- function(x) {
 #' C code into a linked library.  This library is then loaded, and 
 #' appropriate functions created in R to call into this library.  See also: \code{?SHLIB}
 #' 
-#' @param code C code following the \code{.Call()} conventions.  Must
-#'        also include any \code{#include} statements.  
+#' @param code C code following the \code{.Call()} conventions, or a filename
+#'        containing this code. This code must also include 
+#'        any \code{#include} statements - include \code{<R.h>} and
+#'        \code{<Rdefines.h>} at the very least.
 #' @param CFLAGS character string of flags for the C compiler. e.g. "-O3"
 #'        Default: NULL.  If specified this value will \emph{replace} the
 #'        default \code{CFLAGS} R would normally use.  To see these default
@@ -82,6 +84,9 @@ assert_single_string <- function(x) {
 #'        functions are created in the given environment? An error will be
 #'        raised if the name of the wrapper function already exists in 
 #'        the environment and permission has not been given to overwrite.
+#' @param invisible Should the R wrapper function return the result invisibly?
+#'        Default: FALSE.  Set this to \code{TRUE} if the code is only 
+#'        run for its side-effect e.g. just printing data and not returning anything.
 #' \describe{
 #' \item{"callme"}{(Default) Only functions created by this package can be overwritten}
 #' \item{"all"}{All objects can be overwritten}
@@ -133,13 +138,20 @@ assert_single_string <- function(x) {
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, env = parent.frame(), 
-                    overwrite = "callme", verbosity = 0) {
+                    overwrite = "callme", verbosity = 0, invisible = FALSE) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   assert_single_string(code)
   stopifnot(overwrite %in% c('all', 'callme', 'functions', 'none'))
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Load code from file if it is an existing filename
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (file.exists(code)) {
+    code <- paste(readLines(code), collapse = "\n")
+  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Dump flags if verbosity is very high
@@ -251,11 +263,27 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   # Run with a temporary R_MAKEVARS_USER so that we an override
   # R's default CFLAGS 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  command <- paste0(R.home(component = "bin"), "/R")
+  args    <- paste("CMD SHLIB", basename(c_file))
+  if (verbosity >= 2) {
+    message(
+      "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "# To create DLL file:\n",
+      "#   1. Change to working directory\n",
+      "#   2. Run 'R CMD SHLIB ...\n",
+      "cd ", tmp_dir, "\n", 
+      command, " ", args, "\n", 
+      "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    )
+  }
+  
+  
   ret <- with_makevars_file_env(
     R_MAKEVARS_USER = makevars_user, 
     system2(
-      command = paste0(R.home(component = "bin"), "/R"), 
-      args    = paste("CMD SHLIB", basename(c_file)),
+      command = command, 
+      args    = args,
       stdout  = stdout,
       stderr  = stdout
     ))
@@ -278,14 +306,11 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   # Load the DLL
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   dyn.load(dll_file)
-  if (verbosity >= 2) {
-    message("\nDLL file: ", dll_file, "\n")
-  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Automatically generate some wrapper functions in a named list
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  func_list <- create_wrapper_functions(code, dll_file)
+  func_list <- create_wrapper_functions(code, dll_file, invisible)
   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -329,10 +354,10 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
 #' 
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_functions <- function(code, dll_file) {
+create_wrapper_functions <- function(code, dll_file, invisible) {
   
   decls <- extract_function_declarations(code)
-  funcs <- lapply(decls, create_wrapper_function, dll_file = dll_file)
+  funcs <- lapply(decls, create_wrapper_function, dll_file = dll_file, invisible = invisible)
   funcs <- Filter(Negate(is.null), funcs)
   
   if (length(funcs) == 0) {
@@ -403,12 +428,14 @@ extract_args_from_declaration <- function(decl) {
 #' function
 #' 
 #' @param decl C declaration. E.g. \code{"SEXP two(SEXP vara, SEXP varb)"}
+#' @param dll_file full path the dll file
+#' @param invisible logical. Should the result be return invisibly
 #' 
 #' @return anonymous R function to \code{.Call} the dll
 #' 
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_function <- function(decl, dll_file) {
+create_wrapper_function <- function(decl, dll_file, invisible) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the function name
@@ -430,8 +457,14 @@ create_wrapper_function <- function(decl, dll_file) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create the function as a string
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (isTRUE(invisible)) {
+    fmt_string <- "function(%s) invisible(.Call(%s, PACKAGE = '%s'))"
+  } else {
+    fmt_string <- "function(%s) .Call(%s, PACKAGE = '%s')"
+  }
+  
   func_str <- sprintf(
-    "function(%s) .Call(%s, PACKAGE = '%s')", 
+    fmt_string, 
     paste(args, collapse = ", "),
     paste(c(dQuote(func_name, q=FALSE), args), collapse = ", "),
     tools::file_path_sans_ext(base::basename(dll_file))

@@ -1,7 +1,7 @@
 Type: Package
 Package: callme
 Title: Easily Compile and Call Inline C Functions from R
-Version: 0.1.9
+Version: 0.1.9.9000
 Authors@R: 
     person("Mike", "Cheng", , "mikefc@coolbutuseless.com", role = c("aut", "cre", "cph"))
 Maintainer: Mike Cheng <mikefc@coolbutuseless.com>
@@ -11,11 +11,14 @@ Description: Compile inline 'C' code and easily call with
  flags, compiler flags, linking flags and user-specified headers.
  Multiple functions may be define in a single block of code.
 License: MIT + file LICENSE
-URL: https://github.com/coolbutuseless/callme
+URL: https://github.com/coolbutuseless/callme, https://coolbutuseless.github.io/package/callme/index.html
 BugReports: https://github.com/coolbutuseless/callme/issues
 Suggests: 
     knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
+SystemRequirements: Rtools (suitable for the installed R) for Windows, Xcode for Mac

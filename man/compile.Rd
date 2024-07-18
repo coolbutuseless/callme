@@ -11,12 +11,15 @@ compile(
   PKG_LIBS = NULL,
   env = parent.frame(),
   overwrite = "callme",
-  verbosity = 0
+  verbosity = 0,
+  invisible = FALSE
 )
 }
 \arguments{
-\item{code}{C code following the \code{.Call()} conventions.  Must
-also include any \code{#include} statements.}
+\item{code}{C code following the \code{.Call()} conventions, or a filename
+containing this code. This code must also include 
+any \code{#include} statements - include \code{<R.h>} and
+\code{<Rdefines.h>} at the very least.}
 
 \item{CFLAGS}{character string of flags for the C compiler. e.g. "-O3"
 Default: NULL.  If specified this value will \emph{replace} the
@@ -41,17 +44,21 @@ assignment takes place and the (invisible) return value should
 be assigned to a variable to access the compiled code.}
 
 \item{overwrite}{Which existing variables can be overwritten when wrapper 
-       functions are created in the given environment? An error will be
-       raised if the name of the wrapper function already exists in 
-       the environment and permission has not been given to overwrite.
+functions are created in the given environment? An error will be
+raised if the name of the wrapper function already exists in 
+the environment and permission has not been given to overwrite.}
+
+\item{verbosity}{Level of output: Default: 0. Max level: 4}
+
+\item{invisible}{Should the R wrapper function return the result invisibly?
+       Default: FALSE.  Set this to \code{TRUE} if the code is only 
+       run for its side-effect e.g. just printing data and not returning anything.
 \describe{
 \item{"callme"}{(Default) Only functions created by this package can be overwritten}
 \item{"all"}{All objects can be overwritten}
 \item{"functions"}{Only functions can be overwritten}
 \item{"none"}{No existing objects can be overwritten}
 }}
-
-\item{verbosity}{Level of output: Default: 0. Max level: 4}
 }
 \value{
 Invisibly returns a named list of R functions. Each R function 
