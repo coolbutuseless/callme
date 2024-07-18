@@ -260,11 +260,27 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   # Run with a temporary R_MAKEVARS_USER so that we an override
   # R's default CFLAGS 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  command <- paste0(R.home(component = "bin"), "/R")
+  args    <- paste("CMD SHLIB", basename(c_file))
+  if (verbosity >= 2) {
+    message(
+      "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+      "# To create DLL file:\n",
+      "#   1. Change to working directory\n",
+      "#   2. Run 'R CMD SHLIB ...\n",
+      "cd ", tmp_dir, "\n", 
+      command, " ", args, "\n", 
+      "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    )
+  }
+  
+  
   ret <- with_makevars_file_env(
     R_MAKEVARS_USER = makevars_user, 
     system2(
-      command = paste0(R.home(component = "bin"), "/R"), 
-      args    = paste("CMD SHLIB", basename(c_file)),
+      command = command, 
+      args    = args,
       stdout  = stdout,
       stderr  = stdout
     ))
@@ -287,9 +303,6 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   # Load the DLL
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   dyn.load(dll_file)
-  if (verbosity >= 2) {
-    message("\nDLL file: ", dll_file, "\n")
-  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Automatically generate some wrapper functions in a named list
