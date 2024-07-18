@@ -19,7 +19,7 @@ compile(
 \item{code}{C code following the \code{.Call()} conventions, or a filename
 containing this code. This code must also include 
 any \code{#include} statements - include \code{<R.h>} and
-\code{<Rdefines.h>} at the very least.}
+\code{<Rinternals.h>} at the very least.}
 
 \item{CFLAGS}{character string of flags for the C compiler. e.g. "-O3"
 Default: NULL.  If specified this value will \emph{replace} the
@@ -72,7 +72,7 @@ appropriate functions created in R to call into this library.  See also: \code{?
 \examples{
 code <- "
 #include <R.h>
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 // Add 2 numbers
 SEXP add(SEXP val1, SEXP val2) {

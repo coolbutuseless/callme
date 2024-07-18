@@ -4,7 +4,7 @@ test_that("compilation works", {
 
   code <- "
 #include <R.h>
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 SEXP add(SEXP val1, SEXP val2) {
   return ScalarReal(asReal(val1) + asReal(val2));

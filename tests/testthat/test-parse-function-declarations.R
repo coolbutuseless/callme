@@ -2,7 +2,7 @@ test_that("function declaration parser works", {
   
   code <- r"(
 #include <R.h>
-#include <Rdefines.h>
+#include <Rinternals.h>
   
 SEXP version_() {
   return ScalarInteger(1);

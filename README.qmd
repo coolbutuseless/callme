@@ -74,7 +74,7 @@ library(callme)
 
 code <- "
 #include <R.h>
-#include <Rdefines.h>
+#include <Rinternals.h>
 
 // Add 2 numbers
 SEXP add(SEXP val1, SEXP val2) {
@@ -129,7 +129,7 @@ be different for other operating systems.
 ```{r eval=TRUE}
 code <- r"(
 #include <R.h>
-#include <Rdefines.h>
+#include <Rinternals.h>
 #include "zstd.h"
   
 SEXP zstd_version() {

@@ -61,7 +61,7 @@ assert_single_string <- function(x) {
 #' @param code C code following the \code{.Call()} conventions, or a filename
 #'        containing this code. This code must also include 
 #'        any \code{#include} statements - include \code{<R.h>} and
-#'        \code{<Rdefines.h>} at the very least.
+#'        \code{<Rinternals.h>} at the very least.
 #' @param CFLAGS character string of flags for the C compiler. e.g. "-O3"
 #'        Default: NULL.  If specified this value will \emph{replace} the
 #'        default \code{CFLAGS} R would normally use.  To see these default
@@ -101,7 +101,7 @@ assert_single_string <- function(x) {
 #' @examples
 #' code <- "
 #' #include <R.h>
-#' #include <Rdefines.h>
+#' #include <Rinternals.h>
 #' 
 #' // Add 2 numbers
 #' SEXP add(SEXP val1, SEXP val2) {
@@ -196,13 +196,13 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Check if we have the two required includes.
   #  #include <R.h>
-  #  #include <Rdefines.h>
+  #  #include <Rinternals.h>
   #
   # This is the only allowed manipulation of the C source code. 
   # Even then, I'm not broadcasting that I'm doing it :)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!grepl("#include\\s+<Rdefines.h>", code)) {
-    code <- paste("#include <Rdefines.h>", code, sep = "\n")
+  if (!grepl("#include\\s+<Rinternals.h>", code)) {
+    code <- paste("#include <Rinternals.h>", code, sep = "\n")
   }
   if (!grepl("#include\\s+<R.h>", code)) {
     code <- paste("#include <R.h>", code, sep = "\n")
