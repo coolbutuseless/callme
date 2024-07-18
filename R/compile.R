@@ -58,8 +58,10 @@ assert_single_string <- function(x) {
 #' C code into a linked library.  This library is then loaded, and 
 #' appropriate functions created in R to call into this library.  See also: \code{?SHLIB}
 #' 
-#' @param code C code following the \code{.Call()} conventions.  Must
-#'        also include any \code{#include} statements.  
+#' @param code C code following the \code{.Call()} conventions, or a filename
+#'        containing this code. This code must also include 
+#'        any \code{#include} statements - include \code{<R.h>} and
+#'        \code{<Rdefines.h>} at the very least.
 #' @param CFLAGS character string of flags for the C compiler. e.g. "-O3"
 #'        Default: NULL.  If specified this value will \emph{replace} the
 #'        default \code{CFLAGS} R would normally use.  To see these default
@@ -140,6 +142,13 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   assert_single_string(code)
   stopifnot(overwrite %in% c('all', 'callme', 'functions', 'none'))
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Load code from file if it is an existing filename
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (file.exists(code)) {
+    code <- paste(readLines(code), collapse = "\n")
+  }
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Dump flags if verbosity is very high
