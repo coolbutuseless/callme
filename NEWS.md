@@ -3,8 +3,7 @@
 
 * Vignettes
 * `compile()` changes
-    * Add `dir = tempdir()` argument
-    * Read code from filename if it looks like a path and the path exists.
+    * Read code from file if `code` argument is a valid existing path to a file.
 
 # callme 0.1.9  2024-07-13
 

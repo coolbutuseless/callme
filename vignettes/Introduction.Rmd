@@ -47,13 +47,16 @@ library(callme)
 
 `{callme}` is a package for easily compiling inline C code for use within R.
 
+You should definitely read Hadley's [Advanced R Book](http://adv-r.had.co.nz/C-interface.html)
+as it has a great chapter or R's interface to C.
+
 ## Calling compiled code in R
 
 There are a number of possible ways to call compiled code in R:
 
 * `.Call()` - as used by this package
-* `.External()` - possible to use with the code compiled with this package,
-  but not suggested or documented further.
+* `.External()` - an alternative to `.Call()` with a different way of passing
+  arguments. 
 . `.C()` a simple C interface.  Code compiled with this package is not 
   compatible with this interface.
 . `.Fortran()` an interface to Fortran code.  Definitely not supported or used within this package.
@@ -62,15 +65,295 @@ This package only supports calling via the `.Call()` interface.
 
 ## Writing code compatible with `.Call()`
 
+The following code adds two vectors of floating point values and returns
+the result i.e. `a * b`.
+
 ```
 SEXP add(SEXP a, SEXP b) {
-  double aval = asReal(a);
-  double bval = asReal(b);
   
-  double res = aval + bval;
+  // Sanity checks
+  if (length(a) != length(b)) {
+    error("'a' and 'b' must be the same length");
+  }
   
-  return ScalarDouble(res);
+  // Get a pointer to the actual numeric data in 'a' and 'b'
+  double *ap = REAL(a);
+  double *bp = REAL(b);
+  
+  // Allocate a new R object 'res'
+  int N = length(a);
+  SEXP res = PROTECT(allocVector(REALSXP, N));
+  
+  // Get a pointer to the actual numeric data in 'res'
+  double *resp = REAL(res);
+  
+  // Perform some standard C-style operations
+  for (int i = 0; i < N; i++) {
+    resp[i] = ap[i] + bp[i];
+  }
+  
+  // Unwind and data protection and return the R result
+  UNPROTECT(1);
+  return res;
 }
 ```
+
+```{r echo=FALSE, eval=TRUE}
+code <- r"(
+SEXP add(SEXP a, SEXP b) {
+  
+  // Sanity checks
+  if (length(a) != length(b)) {
+    error("'a' and 'b' must be the same length");
+  }
+  
+  // Get a pointer to the actual numeric data in 'a' and 'b'
+  double *ap = REAL(a);
+  double *bp = REAL(b);
+  
+  // Allocate a new R object 'res'
+  int N = length(a);
+  SEXP res = PROTECT(allocVector(REALSXP, N));
+  
+  // Get a pointer to the actual numeric data in 'res'
+  double *resp = REAL(res);
+  
+  // Perform some standard C-style operations
+  for (int i = 0; i < N; i++) {
+    resp[i] = ap[i] + bp[i];
+  }
+  
+  // Unwind and data protection and return the R result
+  UNPROTECT(1);
+  return res;
+}
+)"
+callme::compile(code)
+```
+
+
+The following sections outline the sequence of steps in writing a C
+function to call from R, and is the template followed for the vignettes in this
+package.
+
+* Function signature
+* Sanity checking
+* Unpack the R objects into their C equivalents
+* Allocate a new R object to use as the result
+* Standard C code
+* Tidy and return
+
+
+#### Function signature
+
+All functions callable from R must return a `SEXP`, and only take arguments 
+which are of type `SEXP` (or maybe just `void` if there are no arguments).
+
+The `SEXP` type is an `S-Expression`.  Every value in R is an `SEXP`, and 
+there is information stored within the type to indicate what data is stored 
+within it.
+
+The `TYPEOF()` macro and `type2char()` function within C will be useful to 
+identify what sort of data is in the SEXP.
+
+```{r}
+callme::compile(r"(
+SEXP what_sexp_is_this(SEXP x) {
+  Rprintf("SEXPTYPE: %i = %s\n", TYPEOF(x), type2char(TYPEOF(x)));
+  return R_NilValue;
+}                
+)", invisible = TRUE)
+
+what_sexp_is_this(1L)
+what_sexp_is_this(TRUE)
+what_sexp_is_this(c(1.1, 2.2))
+what_sexp_is_this(list(1, 2, 3))
+what_sexp_is_this("hello")
+what_sexp_is_this(mtcars)
+what_sexp_is_this(mean)
+```
+
+The full list of `SEXP` types are in [Rinternals.h](https://github.com/wch/r-source/blob/trunk/src/include/Rinternals.h)
+
+```
+#define NILSXP	     0	  /* nil = NULL */
+#define SYMSXP	     1	  /* symbols */
+#define LISTSXP	     2	  /* lists of dotted pairs */
+#define CLOSXP	     3	  /* closures */
+#define ENVSXP	     4	  /* environments */
+#define PROMSXP	     5	  /* promises: [un]evaluated closure arguments */
+#define LANGSXP	     6	  /* language constructs (special lists) */
+#define SPECIALSXP   7	  /* special forms */
+#define BUILTINSXP   8	  /* builtin non-special forms */
+#define CHARSXP	     9	  /* "scalar" string type (internal only)*/
+#define LGLSXP	    10	  /* logical vectors */
+/* 11 and 12 were factors and ordered factors in the 1990s */
+#define INTSXP	    13	  /* integer vectors */
+#define REALSXP	    14	  /* real variables */
+#define CPLXSXP	    15	  /* complex variables */
+#define STRSXP	    16	  /* string vectors */
+#define DOTSXP	    17	  /* dot-dot-dot object */
+#define ANYSXP	    18	  /* make "any" args work.
+			     Used in specifying types for symbol
+			     registration to mean anything is okay  */
+#define VECSXP	    19	  /* generic vectors */
+#define EXPRSXP	    20	  /* expressions vectors */
+#define BCODESXP    21    /* byte code */
+#define EXTPTRSXP   22    /* external pointer */
+#define WEAKREFSXP  23    /* weak reference */
+#define RAWSXP      24    /* raw bytes */
+#define OBJSXP      25    /* object, non-vector  */
+#define S4SXP       25    /* same as OBJSXP, retained for back compatability */
+
+/* used for detecting PROTECT issues in memory.c */
+#define NEWSXP      30    /* fresh node created in new page */
+#define FREESXP     31    /* node released by GC */
+
+#define FUNSXP      99    /* Closure or Builtin or Special */
+```
+
+
+
+#### Sanity checking
+
+The `SEXP` type can contain any R object, so when passed in to a C function from 
+R, it is necessary to confirm that it is sane i.e.
+
+* Is it the right type of data?
+* Is it the right length?
+* Do all objects together make sense? e.g. must they all be the same length?
+
+Some checks will need to be explicit.  In the example, the `a` and `b` arguments
+are checked if they are the same length and an error is raised if not.  (`error()` is
+the C equivalenth of R's `stop()`)
+
+```
+// Sanity checks
+if (length(a) != length(b)) {
+  error("'a' and 'b' must be the same length");
+}
+```
+
+If this check was skipped, then later in the example the expression `a[i] * b[i]`
+is possibly going to try and access memory that is out-of-bounds!
+
+
+There are some checks which are implicit in that R will complain if you try 
+to use a value in an inappropriate way.  For example, if a character vector
+is passed in as an argument to `add()`, the `REAL()` macro will try to 
+extract numeric data from the string and fail:
+
+```{r error = TRUE}
+add(1.0, 2.0)     # Good: both types are floating point numeric values
+add(1.0, "hello") # Bad : Can't treat "hello" as a number 
+```
+
+
+
+#### Unpack the R objects into their C equivalents
+
+* `LOGICAL()` extracts the `int32_t` vector with values `0` and `1` from the SEXP
+* `INTEGER()` extracts the `int32_t` vector from the SEXP
+* `REAL()` extracts the `double` pointer
+* `RAW()` extracts the `uint8_t` pointer
+* `COMPLEX()` extracts the `double` pointer to the interleaved real/imaginary components
+* `VECTOR_ELT()` extracts an element from a R `list`, or column from an R `data.frame`
+* `STRING_ELT()` extracts an element from an R character vector
+
+
+```{r}
+compile(r"(
+#include <stdint.h>
+SEXP unpack_integers_from_list(SEXP ll) {
+  
+  // sanity check
+  if (TYPEOF(ll) != VECSXP) {
+    error("'ll' must a list");
+  }
+
+  // iterate over the list
+  for (int i = 0; i < length(ll); i++) {
+    SEXP elem = VECTOR_ELT(ll, i);
+    if (TYPEOF(elem) == INTSXP) {
+       Rprintf("Integer    : ");
+       int32_t *intp = INTEGER(elem);
+       for (int j = 0; j < length(elem); j++) {
+          Rprintf("%i ", intp[j]);
+       }
+       Rprintf("\n");
+    } else {
+      Rprintf("Non-integer: %s\n", type2char(TYPEOF(elem)));
+    }
+  }
+
+  return R_NilValue;
+})", invisible = TRUE)
+
+unpack_integers_from_list(list(1:3, "hello", 1.1, TRUE))
+```
+
+
+
+
+
+
+
+#### Allocate a new R object to use as the result
+
+Standard R types may be created with a call to `allocVector()`.
+
+Because we are operating within C, and the object is not assigned to an R 
+variable, it is necessary to tell R that we are using the object.  This 
+is done with a `PROTECT()` call, and stops R from trying to free the memory 
+while we are using it by calling the garbage collector.
+
+In general, every R object created within C should be wrapped in a `PROTECT()`.
+
+When we leave the function, tally the calls to `PROTECT()` and undo them with
+`UNPROTECT(n)`.  
+
+
+
+```{r}
+callme::compile(r"(
+SEXP alloc_integer(SEXP n) {
+  int len = INTEGER(n)[0];
+  SEXP res = PROTECT(allocVector(INTSXP, len));
+  int *resp = INTEGER(res);
+  for (int i = 0; i < len; i++) {
+     resp[i] = i;
+  }
+  UNPROTECT(1);
+  return res;
+})")
+
+alloc_integer(10L)
+```
+
+
+
+#### Standard C code
+
+In the middle of all the `SEXP`, sanity checking, unpacking and PROTECTing,
+there's often an identifiable bit of just plain C code.  This is usually
+the entire purpose of calling C from R
+
+In the above example this core C code is just looping over two C arrays
+of doubles and summing the result.
+
+```
+for (int i = 0; i < N; i++) {
+  resp[i] = ap[i] + bp[i];
+}
+```
+
+
+#### Tidy and return
+
+* `UNPROTECT()` any objects you `PROTECT()`ed
+* Return an `SEXP` object.
+* Any other `SEXP` objects allocated within the function but not returned will
+  be garbage collected later by R.
+
 
 

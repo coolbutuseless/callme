@@ -84,6 +84,9 @@ assert_single_string <- function(x) {
 #'        functions are created in the given environment? An error will be
 #'        raised if the name of the wrapper function already exists in 
 #'        the environment and permission has not been given to overwrite.
+#' @param invisible Should the R wrapper function return the result invisibly?
+#'        Default: FALSE.  Set this to \code{TRUE} if the code is only 
+#'        run for its side-effect e.g. just printing data and not returning anything.
 #' \describe{
 #' \item{"callme"}{(Default) Only functions created by this package can be overwritten}
 #' \item{"all"}{All objects can be overwritten}
@@ -135,7 +138,7 @@ assert_single_string <- function(x) {
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, env = parent.frame(), 
-                    overwrite = "callme", verbosity = 0) {
+                    overwrite = "callme", verbosity = 0, invisible = FALSE) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Sanity check code
@@ -307,7 +310,7 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Automatically generate some wrapper functions in a named list
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  func_list <- create_wrapper_functions(code, dll_file)
+  func_list <- create_wrapper_functions(code, dll_file, invisible)
   
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,10 +354,10 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
 #' 
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_functions <- function(code, dll_file) {
+create_wrapper_functions <- function(code, dll_file, invisible) {
   
   decls <- extract_function_declarations(code)
-  funcs <- lapply(decls, create_wrapper_function, dll_file = dll_file)
+  funcs <- lapply(decls, create_wrapper_function, dll_file = dll_file, invisible = invisible)
   funcs <- Filter(Negate(is.null), funcs)
   
   if (length(funcs) == 0) {
@@ -425,12 +428,14 @@ extract_args_from_declaration <- function(decl) {
 #' function
 #' 
 #' @param decl C declaration. E.g. \code{"SEXP two(SEXP vara, SEXP varb)"}
+#' @param dll_file full path the dll file
+#' @param invisible logical. Should the result be return invisibly
 #' 
 #' @return anonymous R function to \code{.Call} the dll
 #' 
 #' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-create_wrapper_function <- function(decl, dll_file) {
+create_wrapper_function <- function(decl, dll_file, invisible) {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Extract the function name
@@ -452,8 +457,14 @@ create_wrapper_function <- function(decl, dll_file) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Create the function as a string
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (isTRUE(invisible)) {
+    fmt_string <- "function(%s) invisible(.Call(%s, PACKAGE = '%s'))"
+  } else {
+    fmt_string <- "function(%s) .Call(%s, PACKAGE = '%s')"
+  }
+  
   func_str <- sprintf(
-    "function(%s) .Call(%s, PACKAGE = '%s')", 
+    fmt_string, 
     paste(args, collapse = ", "),
     paste(c(dQuote(func_name, q=FALSE), args), collapse = ", "),
     tools::file_path_sans_ext(base::basename(dll_file))
