@@ -1,0 +1,76 @@
+---
+title: "Introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```
+
+
+* Scope
+  * Calling C (not C++)
+    * Examples aiming for clarity/consistency. Faster methods/shortcuts may be available.
+  * using the .Call interface (contrast with .C, .Fortran)
+  * Other methods of calling inline: `cpp11::cpp_source()`
+  * References
+    * Advanced R book (hadley)
+    * Writing R Extensions
+    * R source code
+* General Approach
+  * Be comfortable programming in C
+  * Each value has to be unpacked from a generic SEXP type to an R type
+  * Need to create R values and PROTECT them from being garbage collected
+  * Release them prior to return
+  * types: int, real, logical, character, list, data.frame
+    * Unpack and use.  Create a new one in C and return.
+    * use type2str(TYPEOF()) to show type name
+    * switch() statement on TYPEOF()
+    * complex example which takes a few arguments and returns a data.frame
+  * Special print methods:  Rprintf, message, warning, error
+* Accessing a third-party library  (use zlib as an example maybe)
+* Accessing RNG
+* Calling R from C
+
+# Introduction
+
+`{callme}` is a package for easily compiling inline C code for use within R.
+
+## Calling compiled code in R
+
+There are a number of possible ways to call compiled code in R:
+
+* `.Call()` - as used by this package
+* `.External()` - possible to use with the code compiled with this package,
+  but not suggested or documented further.
+. `.C()` a simple C interface.  Code compiled with this package is not 
+  compatible with this interface.
+. `.Fortran()` an interface to Fortran code.  Definitely not supported or used within this package.
+
+This package only supports calling via the `.Call()` interface.
+
+## Writing code compatible with `.Call()`
+
+```
+SEXP add(SEXP a, SEXP b) {
+  double aval = asReal(a);
+  double bval = asReal(b);
+  
+  double res = aval + bval;
+  
+  return ScalarDouble(res);
+}
+```
+
+
