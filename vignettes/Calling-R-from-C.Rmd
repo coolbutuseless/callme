@@ -1,8 +1,8 @@
 ---
-title: "Calling-R-from-C"
+title: "Calling R from C"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Calling-R-from-C}
+  %\VignetteIndexEntry{Calling R from C}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,9 +14,76 @@ knitr::opts_chunk$set(
 )
 ```
 
+* `lang1()` to `lang6()` for creating function calls with 0 to 5 arguments
+  (the first item is always the name of the function)
+
 ```{r setup}
 library(callme)
+
+code <- r"(
+
+SEXP call_r_from_c(void) {
+
+  SEXP my_call = PROTECT(lang1(
+    PROTECT(Rf_install("getwd"))
+  ));
+
+  SEXP my_result = PROTECT(eval(my_call, R_GlobalEnv)); 
+
+  UNPROTECT(3);
+  return my_result;
+}
+)"
+
+callme::compile(code)
+
+call_r_from_c()
 ```
+
+
+# Using pairlists
+
+See `https://cran.r-project.org/doc/manuals/R-exts.html`
+
+Named arguments with `SET_TAG`
+
+The C code is equivalent to this R code:
+
+```{r eval = FALSE}
+print(pi , digits = 3)
+```
+
+
+```{r}
+code <- r"(
+SEXP call_print_from_c(SEXP value, SEXP digits) {
+  // Allocate a new call object
+  SEXP my_call = PROTECT(allocLang(3));
+
+  // Manipulate a pointer to this call object to 
+  // fill in the arguments and set argument names 
+  SEXP t = my_call;
+  SETCAR(t, install("print")); t = CDR(t);
+  SETCAR(t,  value)          ; t = CDR(t);
+  SETCAR(t, digits);
+  SET_TAG(t, install("digits"));
+  eval(my_call, R_GlobalEnv);
+
+  UNPROTECT(1);
+  return R_NilValue;
+})"
+
+callme::compile(code, invisible = TRUE)
+
+call_print_from_c(pi, digits = 3)
+```
+
+
+
+
+
+
+
 
 
 
