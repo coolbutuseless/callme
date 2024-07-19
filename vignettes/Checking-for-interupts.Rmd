@@ -17,3 +17,63 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(callme)
 ```
+
+
+```{r eval = FALSE}
+code <- r"(
+#include <R.h>
+#include <Rinternals.h>
+#include <unistd.h>  // for 'sleep()'
+
+SEXP interuptable_sleep(void) {
+  while (1) {
+    R_CheckUserInterrupt();  // abort if user interupts. no recovery.
+    sleep(1);
+  }
+  Rprintf("Never get here!  Interupt causes immediate exit!");
+  return R_NilValue;
+}
+)"
+
+callme::compile(code, invisible = TRUE)
+interuptable_sleep()
+```
+
+
+
+```{r eval=FALSE}
+code <- r"(
+#include <R.h>
+#include <Rinternals.h>
+#include <unistd.h>  // for 'sleep()'
+#include <stdbool.h>
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// As suggested by Simon Urbanek
+// https://stat.ethz.ch/pipermail/r-devel/2011-April/060702.html
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+static void check_interupt_internal(void *dummy) {
+  R_CheckUserInterrupt();
+}
+
+
+// this will call the above in a top-level context so it won't longjmp-out of your context
+bool check_interrupt(void) {
+  return (R_ToplevelExec(check_interupt_internal, NULL) == FALSE);
+}
+
+SEXP interuptable_sleep2(void) {
+  while (1) {
+    if (check_interrupt()) break;  // break out of while(). Keep executing
+    sleep(1);
+  }
+  Rprintf("My sleep was interupted!\n");
+  return R_NilValue;
+}
+)"
+
+callme::compile(code, invisible = TRUE)
+interuptable_sleep2()
+```
+
+

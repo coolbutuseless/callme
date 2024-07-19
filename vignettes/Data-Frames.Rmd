@@ -50,7 +50,6 @@ library(callme)
 code <- r"(
 #include <R.h>
 #include <Rinternals.h>
-#include <Rdefines.h>
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Creating a data.frame within C and returning it to R
@@ -99,7 +98,7 @@ SEXP create_data_frame_in_c(void) {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Treat the VECSXP as a data.frame rather than a list
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  SET_CLASS(df_, mkString("data.frame"));
+  setAttrib(df_, R_ClassSymbol, mkString("data.frame"));
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Set the names on the list.
