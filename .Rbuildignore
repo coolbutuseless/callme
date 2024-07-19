@@ -9,3 +9,4 @@
 ^.devcontainer$
 ^LICENSE.md$
 ^man/figures$
+^pkgdown$

@@ -37,6 +37,8 @@ has a specfici chapter or R's interface to C.
 * Book: [Deep R Programming](https://deepr.gagolewski.com/chapter/310-compiled.html)
 * Davis Vaughan's [Now you C me](https://blog.davisvaughan.com/posts/2019-03-02-now-you-c-me/)
 * [R internals](https://cran.stat.auckland.ac.nz/doc/manuals/r-devel/R-ints.html)
+* [c3po](https://github.com/ramiromagno/c3po)
+* [R Native API](https://github.com/HenrikBengtsson/RNativeAPI)
 
 Important 
 

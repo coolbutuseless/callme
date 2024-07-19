@@ -17,3 +17,29 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(callme)
 ```
+
+
+```{r}
+code <- r"(
+
+SEXP generate_random(void) {
+  
+  GetRNGstate();
+  Rprintf("C: %.7f\n", unif_rand()); 
+  Rprintf("C: %.7f\n", norm_rand()); 
+  PutRNGstate();
+
+  return R_NilValue;
+}
+)"
+
+callme::compile(code)
+
+set.seed(2024)
+runif(1)
+rnorm(1)
+
+set.seed(2024)
+generate_random()
+```
+

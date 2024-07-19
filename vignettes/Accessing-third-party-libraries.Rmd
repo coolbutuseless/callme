@@ -1,8 +1,8 @@
 ---
-title: "Accessing-third-party-libraries"
+title: "Accessing 3rd-Party Libraries"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Accessing-third-party-libraries}
+  %\VignetteIndexEntry{Accessing 3rd-Party Libraries}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,6 +19,21 @@ library(callme)
 ```
 
 
+When linking to a third party library it will often be necessary to explicitly 
+specify a number of things:
+
+* `#include` the header file in the C code
+* Use `PKG_CPPFLAGS` to nominate the search path for where the header file
+  may be found (`-I` flag)
+* Use `PKG_LIBS` to specify
+    * Additional search paths for libraries (`-L` flag)
+    * which libraries to link to (`-l` flag)
+
+## Example: Linking to `zlib`
+
+`zlib` has been chosen here as a library to link to as most systems will
+have this header and library installed.
+
 ```{r}
 code <- r"(
 #include <R.h>
@@ -32,9 +47,26 @@ SEXP get_zlib_version(void) {
 )"
 
 # Compile the code 
-compile(code, PKG_LIBS = "-lz", verbosity = 4)
+compile(code, PKG_LIBS = "-lz")
 
 # Call the function
 get_zlib_version()
+```
+
+## Possible variations
+
+```{r eval = FALSE}
+# include a search path for the library
+compile(code, PKG_LIBS = "-L/local/libs -lz")
+
+# Include a search path for the header
+compile(code, PKG_LIBS = "-lz", PKG_CPPFLAGS = "-I/usr/local/include")
+
+# Link to a drop-in replacement
+compile(code, PKG_LIBS = "-lzlibng")
+
+# Use "pkg-config" to automatically determine appropriate flags
+compile(code, PKG_LIBS = "`pkg-config --libs zlib`", 
+        PKG_CPPFLAGS = "`pkg-config --cflags zlib`")
 ```
 
