@@ -1,9 +1,10 @@
 
-# callme 0.1.9.9000 2014-07-18
+# callme 0.1.9.9001 2014-07-18
 
 * Vignettes
 * `compile()` changes
     * Read code from file if `code` argument is a valid existing path to a file.
+    * Add option `invisible` to return wrapper result invisibly
 
 # callme 0.1.9  2024-07-13
 
