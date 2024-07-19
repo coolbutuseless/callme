@@ -1,0 +1,30 @@
+---
+title: "External pointers to C objects"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{External pointers to C objects}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```
+
+## References
+
+https://cran.r-project.org/doc/manuals/R-exts.html#External-pointers-and-weak-references
+
+
+* Common scenarios
+    * Context pointers
+    * Structs
+* Protect
+* Finalizers

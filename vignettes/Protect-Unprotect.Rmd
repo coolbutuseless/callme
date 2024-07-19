@@ -1,0 +1,54 @@
+---
+title: "Protect-Unprotect"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Protect-Unprotect}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```
+
+
+## References
+
+Change links to: https://blog.r-project.org/
+
+* Don't use `UNPROTECT_PTR` [R blog](https://blog.r-project.org/Blog/public/2018/12/10/unprotecting-by-value/index.html)
+
+
+## `PROTECT`/`UNPROTECT`
+
+[R blog](https://developer.r-project.org/Blog/public/2018/12/10/unprotecting-by-value/index.html)
+
+
+[Common errors](https://developer.r-project.org/Blog/public/2019/04/18/common-protect-errors/)
+
+
+## `PROTECT_WITH_INDEX`/`REPROTECT`
+
+[R blog](https://developer.r-project.org/Blog/public/2018/12/10/unprotecting-by-value/index.html)
+
+## `R_PreserverOjbect`/`R_ReleaseObject`
+
+[R blog](https://developer.r-project.org/Blog/public/2018/12/10/unprotecting-by-value/index.html)
+
+## The `nprotect` technique
+
+
+## Protect `allocVector()` calls
+
+## Protect returned objects from other functions
+
+
+
+

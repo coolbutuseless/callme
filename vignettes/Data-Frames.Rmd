@@ -1,0 +1,19 @@
+---
+title: "Creating a data.frame in C"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Creating a data.frame in C}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```

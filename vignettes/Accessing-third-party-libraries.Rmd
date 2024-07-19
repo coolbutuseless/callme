@@ -1,0 +1,40 @@
+---
+title: "Accessing-third-party-libraries"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Accessing-third-party-libraries}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```
+
+
+```{r}
+code <- r"(
+#include <R.h>
+#include <Rinternals.h>
+#include "zlib.h"
+  
+SEXP get_zlib_version(void) {
+  // const char * ZEXPORT zlibVersion(void);
+  return mkString(zlibVersion());
+}
+)"
+
+# Compile the code 
+compile(code, PKG_LIBS = "-lz", verbosity = 4)
+
+# Call the function
+get_zlib_version()
+```
+

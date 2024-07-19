@@ -19,49 +19,30 @@ library(callme)
 ```
 
 
-* Scope
-  * Calling C (not C++)
-    * Examples aiming for clarity/consistency. Faster methods/shortcuts may be available.
-  * using the .Call interface (contrast with .C, .Fortran)
-  * Other methods of calling inline: `cpp11::cpp_source()`
-  * References
-    * Advanced R book (hadley)
-    * Writing R Extensions
-    * R source code
-* General Approach
-  * Be comfortable programming in C
-  * Each value has to be unpacked from a generic SEXP type to an R type
-  * Need to create R values and PROTECT them from being garbage collected
-  * Release them prior to return
-  * types: int, real, logical, character, list, data.frame
-    * Unpack and use.  Create a new one in C and return.
-    * use type2str(TYPEOF()) to show type name
-    * switch() statement on TYPEOF()
-    * complex example which takes a few arguments and returns a data.frame
-  * Special print methods:  Rprintf, message, warning, error
-* Accessing a third-party library  (use zlib as an example maybe)
-* Accessing RNG
-* Calling R from C
-
 # Introduction
 
 `{callme}` is a package for easily compiling inline C code for use within R.
 
-You should definitely read Hadley's [Advanced R Book](http://adv-r.had.co.nz/C-interface.html)
-as it has a great chapter or R's interface to C.
 
-## Calling compiled code in R
+## Resources
 
-There are a number of possible ways to call compiled code in R:
+# Move these to github README so they don't trigger any URL checks when they 
+go stale on CRAN
 
-* `.Call()` - as used by this package
-* `.External()` - an alternative to `.Call()` with a different way of passing
-  arguments. 
-. `.C()` a simple C interface.  Code compiled with this package is not 
-  compatible with this interface.
-. `.Fortran()` an interface to Fortran code.  Definitely not supported or used within this package.
+* Writing R extensions Section 5 [System and foreign language interfaces](https://cran.r-project.org/doc/manuals/R-exts.html#System-and-foreign-language-interfaces)
+* Hadley's [R internals](https://github.com/hadley/r-internals).
+* [Advanced R Book](http://adv-r.had.co.nz/C-interface.html)
+has a specfici chapter or R's interface to C.
+* Ella Kay's [UserR2024](https://userconf2024.sched.com/event/1c8zS/c-for-r-users-ella-kaye-university-of-warwick) conference presentation: ["C for R users"](https://static.sched.com/hosted_files/userconf2024/84/c-for-r-users.pdf)
+* Book: [Deep R Programming](https://deepr.gagolewski.com/chapter/310-compiled.html)
+* Davis Vaughan's [Now you C me](https://blog.davisvaughan.com/posts/2019-03-02-now-you-c-me/)
+* [R internals](https://cran.stat.auckland.ac.nz/doc/manuals/r-devel/R-ints.html)
 
-This package only supports calling via the `.Call()` interface.
+Important 
+
+* only covers the use of C code using `.Call()`
+* does not aim to teach you C
+* is not an exhaustive resource on C programming with R  (See "Resources")
 
 ## Writing code compatible with `.Call()`
 
@@ -92,7 +73,7 @@ SEXP add(SEXP a, SEXP b) {
     resp[i] = ap[i] + bp[i];
   }
   
-  // Unwind and data protection and return the R result
+  // Unwind any protection of new R objects and return the R result
   UNPROTECT(1);
   return res;
 }
@@ -304,8 +285,7 @@ Standard R types may be created with a call to `allocVector()`.
 
 Because we are operating within C, and the object is not assigned to an R 
 variable, it is necessary to tell R that we are using the object.  This 
-is done with a `PROTECT()` call, and stops R from trying to free the memory 
-while we are using it by calling the garbage collector.
+is done with a `PROTECT()` call, and stops R's garbage collector from trying to free the memory.
 
 In general, every R object created within C should be wrapped in a `PROTECT()`.
 
@@ -334,9 +314,7 @@ alloc_integer(10L)
 
 #### Standard C code
 
-In the middle of all the `SEXP`, sanity checking, unpacking and PROTECTing,
-there's often an identifiable bit of just plain C code.  This is usually
-the entire purpose of calling C from R
+In the middle of this C code there's often identifiable bit of just plain C code - usually the entire purpose of calling C from R
 
 In the above example this core C code is just looping over two C arrays
 of doubles and summing the result.
@@ -354,6 +332,28 @@ for (int i = 0; i < N; i++) {
 * Return an `SEXP` object.
 * Any other `SEXP` objects allocated within the function but not returned will
   be garbage collected later by R.
+
+
+## Printing values in C
+
+In general:
+
+* Use `Rprintf()` instead of `printf()`.  It is analogous to `cat(sprintf(...))` in R
+* `warning()` in C is analogous to `warnings(sprintf(...))` in R
+* `error()` in C is analogous to `stop(sprintf(...))` in R
+
+```{r error = TRUE}
+callme::compile(r"(
+SEXP print_some_things(void) {
+  Rprintf("Rprintf()\n");
+  warning("warning()\n");
+  error("error");
+  return R_NilValue;
+})", invisible = TRUE)
+
+print_some_things()
+```
+
 
 
 

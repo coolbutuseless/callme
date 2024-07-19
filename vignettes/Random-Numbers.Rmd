@@ -1,0 +1,19 @@
+---
+title: "Random-Numbers"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random-Numbers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(callme)
+```
