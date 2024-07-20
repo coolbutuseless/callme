@@ -10,3 +10,4 @@
 ^LICENSE.md$
 ^man/figures$
 ^pkgdown$
+^_pkgdown.yml$

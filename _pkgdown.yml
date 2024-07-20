@@ -1,0 +1,26 @@
+template:
+  bootstrap: 5
+
+url: https://coolbutuseless.github.io/package/callme
+
+articles:
+- title: Get started
+  navbar: ~
+  contents:
+  - introduction
+
+- title: Cookbook
+  navbar: Cookbook
+  contents:
+  - checking-for-interupts
+  - data-frames
+  - protect-unprotect
+  - random-numbers
+  - third-party-libraries
+  
+  
+- title: Cookbook - Advanced
+  navbar: Cookbook - Advanced
+  contents:
+  - external-pointers
+  - calling-r-from-c

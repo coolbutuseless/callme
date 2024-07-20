@@ -337,7 +337,6 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
     }
   }
   
-  
   invisible(func_list)
 }
 
