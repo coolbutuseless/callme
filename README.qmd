@@ -20,7 +20,7 @@ if (FALSE) {
 library(callme)
 ```
 
-# callme <img src="man/figures/logo.png" align="right" height="400/"/>
+# callme <img src="man/figures/logo.png" align="right" width="30%" />
 
 <!-- badges: start -->
 ![](https://img.shields.io/badge/cool-useless-green.svg)
@@ -101,7 +101,7 @@ SEXP new_sqrt(SEXP vec) {
 "
 
 # compile the code
-compile(code, verbosity = 2)
+compile(code)
 
 # Call the functions
 add(99.5, 0.5)

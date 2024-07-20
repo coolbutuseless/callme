@@ -2,7 +2,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# callme <img src="man/figures/logo.png" align="right" height="400/"/>
+# callme <img src="man/figures/logo.png" align="right" width="30%" />
 
 <!-- badges: start -->
 
@@ -86,18 +86,8 @@ SEXP new_sqrt(SEXP vec) {
 "
 
 # compile the code
-compile(code, verbosity = 2)
-```
+compile(code)
 
-    #> # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    #> # To create DLL file:
-    #> #   1. Change to working directory
-    #> #   2. Run 'R CMD SHLIB ...
-    #> cd /var/folders/kq/h7dv19mj00947dthlyb5w2780000gn/T//RtmpMNGxSU/callme_20240720-2012_iPGRlSQb_14aec2bd95643
-    #> /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB callme_20240720-2012_iPGRlSQb.c
-    #> # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``` r
 # Call the functions
 add(99.5, 0.5)
 ```

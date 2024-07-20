@@ -1,8 +1,8 @@
 ---
-title: "Protect-Unprotect"
+title: "Protecting new R objects"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Protect-Unprotect}
+  %\VignetteIndexEntry{Protecting new R objects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
