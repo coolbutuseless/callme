@@ -12,7 +12,7 @@ articles:
 - title: Cookbook
   navbar: Cookbook
   contents:
-  - checking-for-interupts
+  - checking-for-interrupts
   - data-frames
   - protect-unprotect
   - random-numbers

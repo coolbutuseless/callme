@@ -149,7 +149,16 @@ zstd_version()
 
 # References
 
-
+* Writing R extensions Section 5 [System and foreign language interfaces](https://cran.r-project.org/doc/manuals/R-exts.html#System-and-foreign-language-interfaces)
+* Hadley's [R internals](https://github.com/hadley/r-internals).
+* [Advanced R Book](http://adv-r.had.co.nz/C-interface.html)
+has a specfici chapter or R's interface to C.
+* Ella Kay's [UserR2024](https://userconf2024.sched.com/event/1c8zS/c-for-r-users-ella-kaye-university-of-warwick) conference presentation: ["C for R users"](https://static.sched.com/hosted_files/userconf2024/84/c-for-r-users.pdf)
+* Book: [Deep R Programming](https://deepr.gagolewski.com/chapter/310-compiled.html)
+* Davis Vaughan's [Now you C me](https://blog.davisvaughan.com/posts/2019-03-02-now-you-c-me/)
+* [R internals](https://cran.stat.auckland.ac.nz/doc/manuals/r-devel/R-ints.html)
+* [c3po](https://github.com/ramiromagno/c3po)
+* [R Native API](https://github.com/HenrikBengtsson/RNativeAPI)
 
 
 
