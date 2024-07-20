@@ -15,15 +15,15 @@ code can be easily called from R.
 
 Features:
 
-- Supports `.Call()` syntax only with function signatures like
-  `SEXP funcname(SEXP arg1, SEXP arg2, ...)`
-- User submits complete C code - including function declaration and
-  header `#include` directives.
+- Compile inline C code (or code from a file) and makes it immediately
+  (and easily!) available to R.
+- Accepts complete C code - including function declaration and header
+  `#include` directives.
 - Explicit handling for `CFLAGS`, `PKG_CPPFLAGS` and `PKG_LIBS` for
-  setting C pre-processor flags, compiler flags and library linking
-  flags so code can link to other libraries installed on the system.
+  setting compiler flags, C pre-processor flags, and library linking
+  flags, respectively.
 - Generates R functions to call the compiled C functions.
-- Multiple functions allowed in a single code block.
+- Multiple function definitions allowed in a single code block.
 
 ### What’s in the box
 
@@ -32,7 +32,7 @@ Features:
   in R.
 - `cflags_default()` the default C compiler flags R uses on your system
 
-### `.Call()` compatible C functions
+### C function signature
 
 `.Call()` requires any C functions to be accessed from R must only take
 `SEXP` arguments, and return a `SEXP` value.
@@ -86,8 +86,18 @@ SEXP new_sqrt(SEXP vec) {
 "
 
 # compile the code
-compile(code)
+compile(code, verbosity = 2)
+```
 
+    #> # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #> # To create DLL file:
+    #> #   1. Change to working directory
+    #> #   2. Run 'R CMD SHLIB ...
+    #> cd /var/folders/kq/h7dv19mj00947dthlyb5w2780000gn/T//RtmpMNGxSU/callme_20240720-2012_iPGRlSQb_14aec2bd95643
+    #> /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB callme_20240720-2012_iPGRlSQb.c
+    #> # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``` r
 # Call the functions
 add(99.5, 0.5)
 ```
@@ -101,15 +111,16 @@ mul(99.5, 0.5)
     #> [1] 49.75
 
 ``` r
-new_sqrt(c(1, 10, 100, 1000))
+new_sqrt(c(1, 4, 25, 999))
 ```
 
-    #> [1]  1.000000  3.162278 10.000000 31.622777
+    #> [1]  1.00000  2.00000  5.00000 31.60696
 
 ## Linking against an installed library
 
 In this example we want to get the version of the `zstd` library (which
-is installed on the computer), and return it as a character string.
+has already been installed on the computer), and return it as a
+character string.
 
 We need to tell R when compiling the code:
 
@@ -140,4 +151,27 @@ compile(code,
 zstd_version()
 ```
 
-    #> [1] "1.4.8"
+    #> [1] "1.5.6"
+
+# References
+
+- Hadley’s [R internals](https://github.com/hadley/r-internals).
+- [Advanced R Book](http://adv-r.had.co.nz/C-interface.html) has a
+  specfic chapter or R’s interface to C.
+- Ella Kay’s
+  [UserR2024](https://userconf2024.sched.com/event/1c8zS/c-for-r-users-ella-kaye-university-of-warwick)
+  conference presentation: [“C for R
+  users”](https://static.sched.com/hosted_files/userconf2024/84/c-for-r-users.pdf)
+- Book: [Deep R
+  Programming](https://deepr.gagolewski.com/chapter/310-compiled.html)
+- Davis Vaughan’s [Now you C
+  me](https://blog.davisvaughan.com/posts/2019-03-02-now-you-c-me/)
+- [c3po](https://github.com/ramiromagno/c3po)
+- [R Native API](https://github.com/HenrikBengtsson/RNativeAPI)
+
+### R project official documentation
+
+- Writing R extensions Section 5 [System and foreign language
+  interfaces](https://cran.r-project.org/doc/manuals/R-exts.html#System-and-foreign-language-interfaces)
+- [R
+  internals](https://cran.stat.auckland.ac.nz/doc/manuals/r-devel/R-ints.html)

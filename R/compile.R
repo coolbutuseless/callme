@@ -327,11 +327,15 @@ compile <- function(code, CFLAGS = NULL, PKG_CPPFLAGS = NULL, PKG_LIBS = NULL, e
           (overwrite == 'functions' && is.function(var)) 
         ) {
           # Allowed overwrite
+          if (verbosity >= 3) {
+            message("Name exists, but permission has been given to overwrite: '", func_name, "'")
+          }
         } else {
           stop("compile(): Not allowed to overwrite existing variable with new wrapper function '", func_name, "'", call. = FALSE)
         }
-        
-        
+      }
+      if (verbosity >= 2) {
+        message("Creating wrapper function '", func_name, "()'")
       }
       assign(func_name, func_list[[func_name]], pos = env)
     }
