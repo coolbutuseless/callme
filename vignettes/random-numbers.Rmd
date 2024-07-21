@@ -7,21 +7,23 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
-```
-
-```{r setup}
+knitr::knit_engines$set(callme = callme::callme_engine)
 library(callme)
 ```
 
+```{css, echo=FALSE}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
+```
 
-```{r}
-code <- r"(
 
+```{callme}
 SEXP generate_random(void) {
   
   GetRNGstate();
@@ -31,10 +33,9 @@ SEXP generate_random(void) {
 
   return R_NilValue;
 }
-)"
+```
 
-callme::compile(code)
-
+```{r}
 set.seed(2024)
 runif(1)
 rnorm(1)

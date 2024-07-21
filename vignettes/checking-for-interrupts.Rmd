@@ -7,20 +7,24 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
-```
-
-```{r setup}
+knitr::knit_engines$set(callme = callme::callme_engine)
 library(callme)
 ```
 
+```{css, echo=FALSE}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
+```
 
-```{r eval = FALSE}
-code <- r"(
+
+```{callme}
+#| invisible=TRUE
 #include <R.h>
 #include <Rinternals.h>
 #include <unistd.h>  // for 'sleep()'
@@ -33,16 +37,17 @@ SEXP interruptable_sleep(void) {
   Rprintf("Never get here!  Interrupt causes immediate exit!");
   return R_NilValue;
 }
-)"
+```
 
-callme::compile(code, invisible = TRUE)
+
+```{r eval=FALSE}
 interruptable_sleep()
 ```
 
 
 
-```{r eval=FALSE}
-code <- r"(
+```{callme}
+#| compile=FALSE
 #include <R.h>
 #include <Rinternals.h>
 #include <unistd.h>  // for 'sleep()'
@@ -70,9 +75,10 @@ SEXP interruptable_sleep2(void) {
   Rprintf("My sleep was interrupted!\n");
   return R_NilValue;
 }
-)"
+```
 
-callme::compile(code, invisible = TRUE)
+
+```{r eval=FALSE}
 interruptable_sleep2()
 ```
 

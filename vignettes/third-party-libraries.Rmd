@@ -7,15 +7,19 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
+knitr::knit_engines$set(callme = callme::callme_engine)
+library(callme)
 ```
 
-```{r setup}
-library(callme)
+```{css, echo=FALSE}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
 ```
 
 
@@ -34,8 +38,8 @@ specify a number of things:
 `zlib` has been chosen here as a library to link to as most systems will
 have this header and library installed.
 
-```{r}
-code <- r"(
+```{callme}
+#| PKG_LIBS = "-lz"
 #include <R.h>
 #include <Rinternals.h>
 #include "zlib.h"
@@ -44,11 +48,15 @@ SEXP get_zlib_version(void) {
   // const char * ZEXPORT zlibVersion(void);
   return mkString(zlibVersion());
 }
-)"
+```
 
-# Compile the code 
+```{r eval=FALSE}
+# Compile the code with explicit link to library
 compile(code, PKG_LIBS = "-lz")
+```
 
+
+```{r}
 # Call the function
 get_zlib_version()
 ```

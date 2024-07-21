@@ -7,15 +7,25 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
+knitr::knit_engines$set(callme = callme::callme_engine)
+library(callme)
 ```
 
-```{r setup}
-library(callme)
+```{css, echo=FALSE}
+.callme {
+  background-color: #E3F2FD;
+}
+
+pre.callme span {
+  background-color: #E3F2FD;
+}
 ```
 
 
@@ -29,14 +39,57 @@ tight loops of numeric operations.
 In this introductory vignette, some common elements are described for C code
 which operates with R objects
 
+## Code Layout in Vignettes
+
+The C code chunks in these vignettes is streamlined for display purposes.
+
+In general when using `{callme}` you must:
+
+1. Define the C code 
+    * in a string (usually called `code` in examples in this package)
+    * in a `.c` file
+2. Call `callme::compile(code)` or `callme::compile("file.c")`
+
+This standard way of compiling the code in R is shown below:
+
+```{r eval=FALSE}
+code <- r"(
+SEXP print_with_c(SEXP string) {
+   Rprintf("Printing in C: '%s'\n", CHAR(asChar(string)));
+   return R_NilValue;
+}
+)"
+
+callme::compile(code, invisible = TRUE)
+print_with_c("hello")
+```
+
+In order to focus on the actual C code (with C code syntax highlighting), 
+C code will simply be shown in a blue box.   Assigning the code to a string, 
+and calling `callme::compile(code)` is performed, but not shown in the vignettes.
+
+```{callme}
+#| invisible=TRUE
+SEXP print_with_c(SEXP string) {
+   Rprintf("Printing in C: '%s'\n", CHAR(asChar(string)));
+   return R_NilValue;
+}
+```
+
+```{r}
+print_with_c("hello")
+```
+
+
+
+
 ## Example: Add two vectors of floating point numbers
 
 The following code adds two vectors of floating point values and returns
 the result (i.e. `a + b`).
 
 
-```{r}
-code <- r"(
+```{callme}
 SEXP add(SEXP a, SEXP b) {
   
   // Sanity checks
@@ -64,9 +117,10 @@ SEXP add(SEXP a, SEXP b) {
   UNPROTECT(1);
   return res;
 }
-)"
+```
 
-callme::compile(code)
+
+```{r}
 add(c(1, 2, 3), c(4, 5, 6))
 ```
 
@@ -99,7 +153,8 @@ the actual dta useful to C.
 The C compatible data must be extraced from the `SEXP` e.g. find the pointer
 to the array of doubles using:
 
-```
+```{callme}
+#| compile=FALSE, headers=FALSE
 double *ap = REAL(a);
 ```
 
@@ -137,7 +192,8 @@ Some checks will need to be explicit.  In the example, the `a` and `b` arguments
 are checked if they are the same length and an error is raised if not.  (`error()` is
 the C equivalenth of R's `stop()`)
 
-```
+```{callme}
+#| compile=FALSE, headers=FALSE
 // Sanity checks
 if (length(a) != length(b)) {
   error("'a' and 'b' must be the same length");
@@ -181,8 +237,7 @@ When we leave the function, tally the calls to `PROTECT()` and undo them with
 
 
 
-```{r}
-callme::compile(r"(
+```{callme}
 SEXP alloc_integer(SEXP n) {
   int len = INTEGER(n)[0];
   SEXP res = PROTECT(allocVector(INTSXP, len));
@@ -192,8 +247,11 @@ SEXP alloc_integer(SEXP n) {
   }
   UNPROTECT(1);
   return res;
-})")
+}
+```
 
+
+```{r}
 alloc_integer(10L)
 ```
 
@@ -206,7 +264,8 @@ In the middle of this C code there's often identifiable bit of just plain C code
 In the above example this core C code is just looping over two C arrays
 of doubles and summing the result.
 
-```
+```{callme}
+#| compile=FALSE, headers=FALSE
 for (int i = 0; i < N; i++) {
   resp[i] = ap[i] + bp[i];
 }
@@ -229,15 +288,17 @@ In general:
 * `warning()` in C is analogous to `warnings(sprintf(...))` in R
 * `error()` in C is analogous to `stop(sprintf(...))` in R
 
-```{r error = TRUE}
-callme::compile(r"(
+```{callme}
 SEXP print_some_things(void) {
   Rprintf("Rprintf()\n");
   warning("warning()\n");
   error("error");
   return R_NilValue;
-})", invisible = TRUE)
+}
+```
 
+
+```{r error = TRUE}
 print_some_things()
 ```
 

@@ -7,15 +7,19 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
+knitr::knit_engines$set(callme = callme::callme_engine)
+library(callme)
 ```
 
-```{r setup}
-library(callme)
+```{css, echo=FALSE}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
 ```
 
 ## References
@@ -29,9 +33,7 @@ https://cran.r-project.org/doc/manuals/R-exts.html#External-pointers-and-weak-re
 * Protect
 * Finalizers
 
-```{r}
-code <- r"(
-
+```{callme}
 typedef struct {
    double *a;
    int N;
@@ -90,14 +92,11 @@ SEXP print_cdata(SEXP cdata_extptr) {
 
   return R_NilValue;
 }
+```
 
-)"
-
-callme::compile(code, invisible = TRUE)
+```{r}
 cdata <- create_cdata(c(1, 2, pi))
-
 cdata
-
 print_cdata(cdata)
 ```
 

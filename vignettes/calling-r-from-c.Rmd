@@ -7,26 +7,29 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
+knitr::knit_engines$set(callme = callme::callme_engine)
+library(callme)
+```
+
+```{css, echo=FALSE}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
 ```
 
 # ToDo
 
-Creating pairlists from scratch with `CONS()`
-
-
+* Creating pairlists from scratch with `CONS()`
 * `lang1()` to `lang6()` for creating function calls with 0 to 5 arguments
   (the first item is always the name of the function)
+* Contrived example with `lang3()`
 
-```{r setup}
-library(callme)
-
-code <- r"(
-
+```{callme}
 SEXP call_r_from_c(void) {
 
   SEXP my_call = PROTECT(lang1(
@@ -38,10 +41,10 @@ SEXP call_r_from_c(void) {
   UNPROTECT(3);
   return my_result;
 }
-)"
+```
 
-callme::compile(code)
 
+```{r}
 call_r_from_c()
 ```
 
@@ -59,8 +62,8 @@ print(pi , digits = 3)
 ```
 
 
-```{r eval=(getRversion() >= "4.4.1")}
-code <- r"(
+```{callme eval=(getRversion() >= "4.4.1")}
+#| invisible=TRUE
 SEXP call_print_from_c(SEXP value, SEXP digits) {
   // Allocate a new call object
   SEXP my_call = PROTECT(allocLang(3));
@@ -76,10 +79,11 @@ SEXP call_print_from_c(SEXP value, SEXP digits) {
 
   UNPROTECT(1);
   return R_NilValue;
-})"
+}
+```
 
-callme::compile(code, invisible = TRUE)
 
+```{r}
 call_print_from_c(pi, digits = 3)
 ```
 
