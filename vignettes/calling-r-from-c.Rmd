@@ -63,7 +63,7 @@ print(pi , digits = 3)
 
 
 ```{callme eval=(getRversion() >= "4.4.1")}
-#| invisible=TRUE
+#| invisible=TRUE, compile=FALSE
 SEXP call_print_from_c(SEXP value, SEXP digits) {
   // Allocate a new call object
   SEXP my_call = PROTECT(allocLang(3));
@@ -83,7 +83,7 @@ SEXP call_print_from_c(SEXP value, SEXP digits) {
 ```
 
 
-```{r}
+```{r eval=FALSE}
 call_print_from_c(pi, digits = 3)
 ```
 
