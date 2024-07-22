@@ -6,6 +6,12 @@
 #' @param options the data passed in from the code chunk in Rmarkdown or
 #'        Quarto etc.
 #'
+#' \describe{
+#' \item{compile}{Actually compile the code. default TRUE}
+#' \item{headers}{automatically include minimal R headers in code. Default: TRUE}
+#' \item{rcode}{Include R code in a code block beneath the C code}
+#' }
+#'
 #' @examplesIf interactive()
 #' # Set the engine in an initial chunk in the document
 #' # Then use \code{callme} as the chunk engine
@@ -18,7 +24,7 @@
 callme_engine <- function(options) {
   
   if (requireNamespace('knitr', quietly = TRUE)) {
-    "%||%" <- \(x,y) if (is.null(x)) y else x
+    "%||%" <- function(x,y) if (is.null(x)) y else x
     
     
     args <- options[names(options) %in% formalArgs(compile)]
@@ -42,11 +48,31 @@ callme_engine <- function(options) {
     
     # Format as C code in output
     options$engine <- 'c'
-    options$class.source <- c('callme')
+    options$class.source <- c('callme') # CSS class name
     res <- knitr::engine_output(options, args$code, "")
     
-    options <- options[sort(names(options))]
-    # print(options)
+    if (options$rcode %||% TRUE) {
+      rcode <- paste(
+        sprintf('code = r"(\n%s\n)"', args$code),
+        "",
+        "callme::compile(code)",
+        sep = "\n"
+      )
+      # Format as C code in output
+      options$engine <- 'r'
+      options$class.source <- c() 
+      resr <- knitr::engine_output(options, rcode, "")
+      
+      resr <- paste(
+        "<details>",
+        "<summary>Click to show R code</summary>",
+        resr,
+        "</details>",
+        sep = "\n"
+      )
+      
+      res <- paste(res, resr, sep = "\n")
+    }
     
     res
   } else {

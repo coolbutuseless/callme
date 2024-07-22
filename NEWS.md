@@ -1,11 +1,13 @@
 
-# callme 0.1.9.9002 2014-07-18
+# callme 0.1.9.9003 2014-07-23
 
 * Vignettes
 * `compile()` changes
     * Read code from file if `code` argument is a valid existing path to a file.
     * Add option `invisible` to return wrapper result invisibly
 * Re-introduce rendering `callme-engine` to use with `knitr`
+    * Show C code standalone in blue box, and C code hidden in a `<details>` block
+
 
 # callme 0.1.9  2024-07-13
 

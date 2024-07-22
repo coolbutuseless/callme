@@ -8,7 +8,13 @@ callme_engine(options)
 }
 \arguments{
 \item{options}{the data passed in from the code chunk in Rmarkdown or
-Quarto etc.}
+       Quarto etc.
+
+\describe{
+\item{compile}{Actually compile the code. default TRUE}
+\item{headers}{automatically include minimal R headers in code. Default: TRUE}
+\item{rcode}{Include R code in a code block beneath the C code}
+}}
 }
 \value{
 text block to be rendered in the document

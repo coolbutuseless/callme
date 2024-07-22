@@ -19,13 +19,8 @@ library(callme)
 ```
 
 ```{css, echo=FALSE}
-.callme {
-  background-color: #E3F2FD;
-}
-
-pre.callme span {
-  background-color: #E3F2FD;
-}
+.callme         { background-color: #E3F2FD; }
+pre.callme span { background-color: #E3F2FD; }
 ```
 
 
@@ -154,7 +149,7 @@ The C compatible data must be extraced from the `SEXP` e.g. find the pointer
 to the array of doubles using:
 
 ```{callme}
-#| compile=FALSE, headers=FALSE
+#| compile = FALSE, headers = FALSE, rcode = FALSE
 double *ap = REAL(a);
 ```
 
@@ -193,7 +188,7 @@ are checked if they are the same length and an error is raised if not.  (`error(
 the C equivalenth of R's `stop()`)
 
 ```{callme}
-#| compile=FALSE, headers=FALSE
+#| compile=FALSE, headers=FALSE, rcode=FALSE
 // Sanity checks
 if (length(a) != length(b)) {
   error("'a' and 'b' must be the same length");
@@ -265,7 +260,7 @@ In the above example this core C code is just looping over two C arrays
 of doubles and summing the result.
 
 ```{callme}
-#| compile=FALSE, headers=FALSE
+#| compile=FALSE, headers=FALSE, rcode=FALSE
 for (int i = 0; i < N; i++) {
   resp[i] = ap[i] + bp[i];
 }
