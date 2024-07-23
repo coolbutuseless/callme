@@ -15,8 +15,6 @@ articles:
   contents:
   - checking-for-interrupts
   - data-frames
-  - protect-unprotect
-  - random-numbers
   - third-party-libraries
   
   

@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 
 
 if (FALSE) {
-  pkgdown::build_site(override = list(destination = "../coolbutuseless.github.io/package/callme"))
+  pkgdown::build_site(override = list(destination = "../coolbutuseless.github.io/package/callme"), new_process = FALSE)
 }
 
 library(callme)
