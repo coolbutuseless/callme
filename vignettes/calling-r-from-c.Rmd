@@ -22,15 +22,27 @@ library(callme)
 pre.callme span { background-color: #E3F2FD; }
 ```
 
-# ToDo
+## Introduction
 
-* Creating pairlists from scratch with `CONS()`
-* `lang1()` to `lang6()` for creating function calls with 0 to 5 arguments
-  (the first item is always the name of the function)
-* Contrived example with `lang3()`
+Calling an R function from C involves:
+
+* Creating a special list of function name and arguments
+* Optionally setting the argument names with `SET_TAG()`
+* Calling `eval()`
+
+Creating the special list for the call can be done using the 
+helper methods `lang1()` to `lang6()`, or for R 4.4.1 or later
+`allocLang()` can provide more flexibility if needed.
+
+## `lang1()` - Calling an R function with no arguments
+
+`lang1()` is for assembling a call to an R function without specifying 
+any arguments.
+
+In this example `getwd()` is called from C using `lang1()`
 
 ```{callme}
-SEXP call_r_from_c(void) {
+SEXP call_r_from_c_with_lang1(void) {
 
   SEXP my_call = PROTECT(lang1(
     PROTECT(Rf_install("getwd"))
@@ -43,17 +55,72 @@ SEXP call_r_from_c(void) {
 }
 ```
 
-
 ```{r}
-call_r_from_c()
+call_r_from_c_with_lang1()
 ```
 
 
-# Using `allocLang()`  (R >= 4.4.1 only)
 
-See `https://cran.r-project.org/doc/manuals/R-exts.html`
+## `lang2()` - Calling an R function with a single unnamed argument
 
-Named arguments with `SET_TAG`
+`lang2()` is for assembling a call to an R function and specifying a
+single argument.
+
+In this example `abs(-1)` is called from C using `lang2()`
+
+```{callme}
+SEXP call_r_from_c_with_lang2(void) {
+
+  SEXP val = PROTECT(ScalarReal(-1));
+  SEXP my_call = PROTECT(lang2(
+    PROTECT(Rf_install("abs")),
+    val
+  ));
+
+  SEXP my_result = PROTECT(eval(my_call, R_GlobalEnv)); 
+
+  UNPROTECT(4);
+  return my_result;
+}
+```
+
+```{r}
+call_r_from_c_with_lang2()
+```
+
+
+## `lang2()` - Calling an R function with a single named argument
+
+In this example `tempfile(fileext = ".txt")` is called from C using `lang2()`
+
+```{callme}
+SEXP call_r_from_c_with_lang2_named(void) {
+ 
+  // Assemble the function + argument with name
+  SEXP val = PROTECT(mkString(".txt"));
+  SEXP my_call = PROTECT(lang2(
+    PROTECT(Rf_install("tempfile")),
+    val
+  ));
+
+  // Set the argument name
+  SEXP t = CDR(my_call);
+  SET_TAG(t, Rf_install("fileext"));
+  
+  // Evaluate the call
+  SEXP my_result = PROTECT(eval(my_call, R_GlobalEnv)); 
+
+  UNPROTECT(4);
+  return my_result;
+}
+```
+
+```{r}
+call_r_from_c_with_lang2_named()
+```
+
+
+## Using `allocLang()`  (R >= 4.4.1 only)
 
 The C code is equivalent to this R code:
 

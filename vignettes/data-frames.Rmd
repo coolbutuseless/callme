@@ -22,7 +22,7 @@ library(callme)
 pre.callme span { background-color: #E3F2FD; }
 ```
 
-
+## Introduction
 
 `data.frame` objects are mostly `list` objects with some added constraints.
 
@@ -31,15 +31,13 @@ In general a `data.frame` consists of
 * a list (`VECSXP`)
 * each item in the list is a column
 * each element in the list must have the same length
-* a character vector of column names (optional, always included in practice)
+* a character vector of column names (optional, but always included in practice)
 * an (optional) character vector of row names
 * the class `data.frame`
 
 ## Example: Create a data.frame in C
 
 The following code generates a data.frame within C.
-
-Note: A specific technique must be used to specify that the row names are empty.
 
 The C code is the equivalent of the following R code:
 
@@ -70,9 +68,9 @@ SEXP create_data_frame_in_c(void) {
 
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Each member of the list gets allocated separately
+  // Each column of the data.frame gets allocated separately
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  int n = 10;
+  int n = 10; // number of rows
 
   SEXP idx_ = PROTECT(allocVector(INTSXP , n));
   SEXP x_   = PROTECT(allocVector(REALSXP, n));
@@ -80,7 +78,7 @@ SEXP create_data_frame_in_c(void) {
 
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Assign some dummy values into the members
+  // Assign some dummy values into the columns
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   for (int i = 0; i < n; i++) {
     INTEGER(idx_)[i] = i + 1;
@@ -106,7 +104,7 @@ SEXP create_data_frame_in_c(void) {
   setAttrib(df_, R_ClassSymbol, mkString("data.frame"));
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Set the names on the list.
+  // Set the names on the data.frame
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   SEXP names = PROTECT(allocVector(STRSXP, 3));
   SET_STRING_ELT(names,  0, mkChar("idx"));
@@ -115,7 +113,7 @@ SEXP create_data_frame_in_c(void) {
   setAttrib(df_, R_NamesSymbol, names);
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Set the row.names on the list.
+  // Set the row.names on the data.frame
   // Use the shortcut as used in .set_row_names() in R
   // i.e. set rownames to c(NA_integer, -len) and it will
   // take care of the rest. This is equivalent to rownames(x) <- NULL

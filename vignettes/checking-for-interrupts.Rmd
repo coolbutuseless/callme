@@ -22,6 +22,19 @@ library(callme)
 pre.callme span { background-color: #E3F2FD; }
 ```
 
+## Introduction
+
+It is considered good practice to allow C code to be interupted if it runs
+for an extended period.
+
+`R_CheckUserInterrupt()` checks whether the user is trying to interrupt 
+(using `ctrl-c` or similar) and will immediately abort the execution of the code.
+
+## `R_CheckUserInterrupt()` example
+
+In the folowing example, when interrupted, the `Rprintf()` and `return` 
+statements will not be executed.  Control will immediately return 
+to the user's R session.
 
 ```{callme}
 #| invisible=TRUE
@@ -44,6 +57,13 @@ SEXP interruptable_sleep(void) {
 interruptable_sleep()
 ```
 
+## Continuing C execution after the interrupt
+
+You may also wish to continue execution of the C code after the interrupt
+(e.g. to tidy and free any resources).
+
+In this example the `Rprintf()` statment and `return` will be executed
+following the interuption.
 
 
 ```{callme}
@@ -61,12 +81,17 @@ static void check_interrupt_internal(void *dummy) {
   R_CheckUserInterrupt();
 }
 
-
-// this will call the above in a top-level context so it won't longjmp-out of your context
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// this will call the above in a top-level context so it won't 
+// longjmp-out of your context
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 bool check_interrupt(void) {
   return (R_ToplevelExec(check_interrupt_internal, NULL) == FALSE);
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Your code goes here
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP interruptable_sleep2(void) {
   while (1) {
     if (check_interrupt()) break;  // break out of while(). Keep executing
