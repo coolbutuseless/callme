@@ -61,7 +61,8 @@ print_with_c("hello")
 
 In order to focus on the actual C code (with C code syntax highlighting), 
 C code will simply be shown in a blue box.   Assigning the code to a string, 
-and calling `callme::compile(code)` is performed, but not shown in the vignettes.
+and calling `callme::compile(code)` are hidden by default (`Click to show R code` 
+will reveal this code).
 
 ```{callme}
 #| invisible=TRUE
@@ -134,7 +135,7 @@ Function signatures must be of the format `SEXP funcname(SEXP arg1, SEXP arg2, .
 
 There is a much greater need for checking for sane arguments in C compared to 
 R.   In R, an out-of-bounds memory access might only result in an `NA` value, but
-in C such a memory access can cause memory corruption and crashes.
+in C such a bad memory access can cause memory corruption and crashes.
 
 In the example above, the lengths of the two input vectors were checked as
 automatic vector recyling does not happen in C like it does in R.
@@ -167,135 +168,6 @@ in which they store data.
 The final returned object must also be of type `SEXP`.  This object may
 have been created with a call to `allocVector()` but there are convenience
 functions for creating and returning single values e.g. `ScalarInteger()`
-
-
-
-
-
-
-
-#### Sanity checking
-
-The `SEXP` type can contain any R object, so when passed in to a C function from 
-R, it is necessary to confirm that it is sane i.e.
-
-* Is it the right type of data?
-* Is it the right length?
-* Do all objects together make sense? e.g. must they all be the same length?
-
-Some checks will need to be explicit.  In the example, the `a` and `b` arguments
-are checked if they are the same length and an error is raised if not.  (`error()` is
-the C equivalenth of R's `stop()`)
-
-```{callme}
-#| compile=FALSE, headers=FALSE, rcode=FALSE
-// Sanity checks
-if (length(a) != length(b)) {
-  error("'a' and 'b' must be the same length");
-}
-```
-
-If this check was skipped, then later in the example the expression `a[i] * b[i]`
-is possibly going to try and access memory that is out-of-bounds!
-
-
-There are some checks which are implicit in that R will complain if you try 
-to use a value in an inappropriate way.  For example, if a character vector
-is passed in as an argument to `add()`, the `REAL()` macro will try to 
-extract numeric data from the string and fail:
-
-```{r error = TRUE}
-add(1.0, 2.0)     # Good: both types are floating point numeric values
-add(1.0, "hello") # Bad : Can't treat "hello" as a number 
-```
-
-
-
-
-
-
-
-
-
-#### Allocate a new R object to use as the result
-
-Standard R types may be created with a call to `allocVector()`.
-
-Because we are operating within C, and the object is not assigned to an R 
-variable, it is necessary to tell R that we are using the object.  This 
-is done with a `PROTECT()` call, and stops R's garbage collector from trying to free the memory.
-
-In general, every R object created within C should be wrapped in a `PROTECT()`.
-
-When we leave the function, tally the calls to `PROTECT()` and undo them with
-`UNPROTECT(n)`.  
-
-
-
-```{callme}
-SEXP alloc_integer(SEXP n) {
-  int len = INTEGER(n)[0];
-  SEXP res = PROTECT(allocVector(INTSXP, len));
-  int *resp = INTEGER(res);
-  for (int i = 0; i < len; i++) {
-     resp[i] = i;
-  }
-  UNPROTECT(1);
-  return res;
-}
-```
-
-
-```{r}
-alloc_integer(10L)
-```
-
-
-
-#### Standard C code
-
-In the middle of this C code there's often identifiable bit of just plain C code - usually the entire purpose of calling C from R
-
-In the above example this core C code is just looping over two C arrays
-of doubles and summing the result.
-
-```{callme}
-#| compile=FALSE, headers=FALSE, rcode=FALSE
-for (int i = 0; i < N; i++) {
-  resp[i] = ap[i] + bp[i];
-}
-```
-
-
-#### Tidy and return
-
-* `UNPROTECT()` any objects you `PROTECT()`ed
-* Return an `SEXP` object.
-* Any other `SEXP` objects allocated within the function but not returned will
-  be garbage collected later by R.
-
-
-## Printing values in C
-
-In general:
-
-* Use `Rprintf()` instead of `printf()`.  It is analogous to `cat(sprintf(...))` in R
-* `warning()` in C is analogous to `warnings(sprintf(...))` in R
-* `error()` in C is analogous to `stop(sprintf(...))` in R
-
-```{callme}
-SEXP print_some_things(void) {
-  Rprintf("Rprintf()\n");
-  warning("warning()\n");
-  error("error");
-  return R_NilValue;
-}
-```
-
-
-```{r error = TRUE}
-print_some_things()
-```
 
 
 

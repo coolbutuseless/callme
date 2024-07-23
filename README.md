@@ -1,5 +1,4 @@
 
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # callme <img src="man/figures/logo.png" align="right" width="30%" />
@@ -29,14 +28,8 @@ Features:
 
 - `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBS, env, verbosity)`
   compile the C `code` and assign R functions into the nominated `env`
-  in R.
+  in R. C code could be as a string or in a file.
 - `cflags_default()` the default C compiler flags R uses on your system
-
-### C function signature
-
-`.Call()` requires any C functions to be accessed from R must only take
-`SEXP` arguments, and return a `SEXP` value.
-e.g. `SEXP add(SEXP x, SEXP y) { ... }`
 
 ## Installation
 
@@ -141,7 +134,7 @@ compile(code,
 zstd_version()
 ```
 
-    #> [1] "1.5.6"
+    #> [1] "1.5.5"
 
 # References
 
