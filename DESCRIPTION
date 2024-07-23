@@ -12,7 +12,7 @@ Description: Compile inline 'C' code and easily call with
  libraries. Multiple functions may be defined in a single block of code - which 
  may be defined in a string or a path to a source file.
 License: MIT + file LICENSE
-URL: https://github.com/coolbutuseless/callme, https://coolbutuseless.github.io/package/callme
+URL: https://github.com/coolbutuseless/callme, https://coolbutuseless.github.io/package/callme/
 BugReports: https://github.com/coolbutuseless/callme/issues
 Imports:
     methods

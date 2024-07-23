@@ -62,7 +62,9 @@ the environment and permission has not been given to overwrite.}
 }
 \value{
 Invisibly returns a named list of R functions. Each R function 
-        calls to the equivalent C function.
+        calls to the equivalent C function.  If \code{env} is specified, 
+        then these wrapper functions are assigned in the given 
+        environment.
 }
 \description{
 This function uses the \code{R CMD SHLIB} process to compile

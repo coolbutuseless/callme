@@ -96,7 +96,9 @@ assert_single_string <- function(x) {
 #' @param verbosity Level of output: Default: 0. Max level: 4
 #' 
 #' @return Invisibly returns a named list of R functions. Each R function 
-#'         calls to the equivalent C function.  
+#'         calls to the equivalent C function.  If \code{env} is specified, 
+#'         then these wrapper functions are assigned in the given 
+#'         environment.
 #'         
 #' @examples
 #' code <- "
