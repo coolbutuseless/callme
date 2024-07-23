@@ -22,6 +22,7 @@ library(callme)
 pre.callme span { background-color: #E3F2FD; }
 ```
 
+## Introduction
 
 When linking to a third party library it will often be necessary to explicitly 
 specify a number of things:
@@ -35,8 +36,6 @@ specify a number of things:
 
 ## Example: Linking to `zlib`
 
-`zlib` has been chosen here as a library to link to as most systems will
-have this header and library installed.
 
 ```{callme}
 #| PKG_LIBS = "-lz"

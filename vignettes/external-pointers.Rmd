@@ -22,18 +22,21 @@ library(callme)
 pre.callme span { background-color: #E3F2FD; }
 ```
 
-## References
+## Introduction
 
-https://cran.r-project.org/doc/manuals/R-exts.html#External-pointers-and-weak-references
+`External pointers` are a method for keeping a reference to a C 
+object across multiple calls.
 
+A common usecase is when a `struct` in C is used to keep context and this
+context must be initialised once and then passed in to every subsequent
+function call.
 
-* Common scenarios
-    * Context pointers
-    * Structs
-* Protect
-* Finalizers
+## Wrapping a C struct as an External Pointer
 
 ```{callme}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// The struct we will allocate and use in multiple calls
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct {
    double *a;
    int N;
@@ -41,9 +44,12 @@ typedef struct {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Finalize struct - free all allocated memory and clear the pointer
+// This will be called by R's garbage collected when the variable 
+// falls out of scope
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void cdata_finalizer(SEXP cdata_) {
   Rprintf("cdata finalizer called to free the C pointer memory\n");
+  
   cdata_t *cdata = R_ExternalPtrAddr(cdata_);
   if (cdata != NULL) {
     free(cdata->a);
@@ -52,6 +58,10 @@ void cdata_finalizer(SEXP cdata_) {
   }
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocate and initialise the struct by copying the floating point
+// data in 'values' argument
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP create_cdata(SEXP values) {
   int N = length(values);
   cdata_t *cdata = calloc(1, sizeof(cdata_t));
@@ -75,6 +85,9 @@ SEXP create_cdata(SEXP values) {
   return cdata_extptr;
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Print the struct
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 SEXP print_cdata(SEXP cdata_extptr) {
   if (!inherits(cdata_extptr, "cdata_extptr")) {
     error("Expecting 'cdata' to be an 'cdata_extptr' ExternalPtr");

@@ -24,7 +24,7 @@ pre.callme span { background-color: #E3F2FD; }
 ```
 
 
-# Introduction
+## Introduction
 
 `{callme}` is a package for easily compiling inline C code for use within R.
 
