@@ -9,17 +9,17 @@
 #' \describe{
 #' \item{compile}{Actually compile the code. default TRUE}
 #' \item{headers}{automatically include minimal R headers in code. Default: TRUE}
-#' \item{rcode}{Include R code in a code block beneath the C code}
+#' \item{rcode}{Include R code in a code block beneath the C code, Default: TRUE}
 #' }
 #'
 #' @examplesIf interactive()
 #' # Set the engine in an initial chunk in the document
 #' # Then use \code{callme} as the chunk engine
-#' knitr::knit_engines$set(callme = callme::callme_engine)
+#' knitr::knit_engines$set(callme = callme:::callme_engine)
 #'
 #' @return text block to be rendered in the document
 #' @importFrom methods formalArgs
-#' @export
+#' @noRd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 callme_engine <- function(options) {
   
