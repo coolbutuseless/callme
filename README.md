@@ -1,11 +1,13 @@
 
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # callme <img src="man/figures/logo.png" align="right" width="30%" />
 
 <!-- badges: start -->
 
-![](https://img.shields.io/badge/cool-useless-green.svg)
+![](https://img.shields.io/badge/cool-useless-green.svg) [![CRAN
+status](https://www.r-pkg.org/badges/version/callme.png)](https://CRAN.R-project.org/package=callme)
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -33,12 +35,25 @@ Features:
 
 ## Installation
 
-You can install from [GitHub](https://github.com/coolbutuseless/callme)
-with:
+This package can be installed from CRAN
+
+``` r
+install.packages('callme')
+```
+
+You can install the latest development version from
+[GitHub](https://github.com/coolbutuseless/callme) with:
 
 ``` r
 # install.package('remotes')
 remotes::install_github('coolbutuseless/callme')
+```
+
+Pre-built source/binary versions can also be installed from
+[R-universe](https://r-universe.dev)
+
+``` r
+install.packages('callme', repos = c('https://coolbutuseless.r-universe.dev', 'https://cloud.r-project.org'))
 ```
 
 ## Example
@@ -134,7 +149,7 @@ compile(code,
 zstd_version()
 ```
 
-    #> [1] "1.5.5"
+    #> [1] "1.5.6"
 
 # References
 

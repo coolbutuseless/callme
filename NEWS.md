@@ -1,4 +1,8 @@
 
+# callme 0.1.10.9000 2014-07-28
+
+* Fix title in DESCRIPTION for CRAN.  Put 'C' in single quotes.
+
 # callme 0.1.10 2014-07-23
 
 * Vignettes

@@ -1,7 +1,7 @@
 Type: Package
 Package: callme
-Title: Easily Compile and Call Inline C Functions
-Version: 0.1.10
+Title: Easily Compile and Call Inline 'C' Functions
+Version: 0.1.10.9000
 Authors@R: 
     person("Mike", "Cheng", , "mikefc@coolbutuseless.com", role = c("aut", "cre", "cph"))
 Maintainer: Mike Cheng <mikefc@coolbutuseless.com>

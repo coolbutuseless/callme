@@ -24,6 +24,7 @@ library(callme)
 
 <!-- badges: start -->
 ![](https://img.shields.io/badge/cool-useless-green.svg)
+[![CRAN status](https://www.r-pkg.org/badges/version/callme)](https://CRAN.R-project.org/package=callme)
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -49,14 +50,31 @@ C code could be as a string or in a file.
 * `cflags_default()` the default C compiler flags R uses on your system
 
 
+
 ## Installation
 
-You can install from [GitHub](https://github.com/coolbutuseless/callme) with:
+This package can be installed from CRAN
+
+``` r
+install.packages('callme')
+```
+
+
+You can install the latest development version from [GitHub](https://github.com/coolbutuseless/callme) with:
 
 ``` r
 # install.package('remotes')
 remotes::install_github('coolbutuseless/callme')
 ```
+
+Pre-built source/binary versions can also be installed from [R-universe](https://r-universe.dev)
+
+``` r
+install.packages('callme', repos = c('https://coolbutuseless.r-universe.dev', 'https://cloud.r-project.org'))
+```
+
+
+
 
 ## Example
 
