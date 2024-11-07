@@ -7,7 +7,7 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg) [![CRAN
-status](https://www.r-pkg.org/badges/version/callme.png)](https://CRAN.R-project.org/package=callme)
+status](https://www.r-pkg.org/badges/version/callme)](https://CRAN.R-project.org/package=callme)
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
