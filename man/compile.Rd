@@ -24,7 +24,7 @@ any \code{#include} statements - include \code{<R.h>} and
 \item{CFLAGS}{character string of flags for the C compiler. e.g. "-O3"
 Default: NULL.  If specified this value will \emph{replace} the
 default \code{CFLAGS} R would normally use.  To see these default
-flags use \code{cflags_default()}.}
+flags use \code{maketools::cc_info()$flags}.}
 
 \item{PKG_CPPFLAGS}{character string of flags for the C pre-processor.
 Flags such as "-I", "-D" and "-U" go here.

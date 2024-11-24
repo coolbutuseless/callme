@@ -7,7 +7,7 @@
 <!-- badges: start -->
 
 ![](https://img.shields.io/badge/cool-useless-green.svg) [![CRAN
-status](https://www.r-pkg.org/badges/version/callme)](https://CRAN.R-project.org/package=callme)
+status](https://www.r-pkg.org/badges/version/callme.png)](https://CRAN.R-project.org/package=callme)
 [![R-CMD-check](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/coolbutuseless/callme/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -31,7 +31,6 @@ Features:
 - `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBS, env, verbosity)`
   compile the C `code` and assign R functions into the nominated `env`
   in R. C code could be as a string or in a file.
-- `cflags_default()` the default C compiler flags R uses on your system
 
 ## Installation
 

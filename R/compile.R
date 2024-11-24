@@ -1,18 +1,6 @@
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#' Retrieve the default CFLAGS R uses to compile shared libraries
-#' @return character string of default CFLAGS for this R installation
-#' @examples
-#' cflags_default()
-#' @export
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cflags_default <- function() {
-  system("R CMD config CFLAGS", intern = TRUE)
-}
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run code with the given R_MAKEVARS_USER filename
 # Similar idea to 'withr::with_makevars()'
 #
@@ -65,7 +53,7 @@ assert_single_string <- function(x) {
 #' @param CFLAGS character string of flags for the C compiler. e.g. "-O3"
 #'        Default: NULL.  If specified this value will \emph{replace} the
 #'        default \code{CFLAGS} R would normally use.  To see these default
-#'        flags use \code{cflags_default()}.
+#'        flags use \code{maketools::cc_info()$flags}.
 #' @param PKG_CPPFLAGS character string of flags for the C pre-processor.
 #'        Flags such as "-I", "-D" and "-U" go here.
 #'        Default: NULL

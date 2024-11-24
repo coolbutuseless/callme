@@ -47,13 +47,12 @@ Features:
 * `compile(code, CFLAGS, PKG_CPPFLAGS, PKG_LIBS, env, verbosity)` 
 compile the C `code` and assign R functions into the nominated `env` in R.
 C code could be as a string or in a file.
-* `cflags_default()` the default C compiler flags R uses on your system
 
 
 
 ## Installation
 
-This package can be installed from CRAN
+This package can be installed from [CRAN](https://cran.r-project.org/package=callme)
 
 ``` r
 install.packages('callme')
