@@ -1,4 +1,8 @@
 
+# callme 0.1.11.9000
+
+* Support `const SEXP` parameters
+
 # callme 0.1.11
 
 * Fix title in DESCRIPTION for CRAN.  Put 'C' in single quotes.

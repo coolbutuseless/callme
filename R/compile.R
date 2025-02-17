@@ -405,7 +405,7 @@ extract_args_from_declaration <- function(decl) {
     return(NA_character_)
   }
   
-  args <- gsub("SEXP", "", args)
+  args <- gsub("(const SEXP|SEXP)", "", args)
   args <- trimws(args)
   if (length(args) == 1 && args == "") {
     # Setting args to NULL here makes the function creation easier.
